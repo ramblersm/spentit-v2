@@ -196,28 +196,39 @@ function ChimeRipple({ onDone }) {
 
 // ─── Pull-to-refresh ─────────────────────────────────────────────────────────
 
-function usePullToRefresh(onRefresh) {
-  const [pulling, setPulling]   = useState(false)
+function usePullToRefresh(onRefresh, scrollRef) {
   const [distance, setDistance] = useState(0)
-  const startY  = useRef(null)
-  const THRESHOLD = 72
+  const startY    = useRef(null)
+  const active    = useRef(false)
+  const THRESHOLD = 68
 
   const onTouchStart = useCallback(e => {
-    if (e.touches[0].clientY < 160) startY.current = e.touches[0].clientY
-  }, [])
+    // Only activate if the scroll container is at the very top
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY
+      active.current = false
+    }
+  }, [scrollRef])
 
   const onTouchMove = useCallback(e => {
     if (startY.current === null) return
     const dy = e.touches[0].clientY - startY.current
-    if (dy > 0 && dy < 130) { setPulling(true); setDistance(dy) }
+    if (dy > 4) {
+      active.current = true
+      // Dampen the pull so it feels springy
+      setDistance(Math.min(dy * 0.45, 90))
+    } else {
+      active.current = false
+      setDistance(0)
+    }
   }, [])
 
   const onTouchEnd = useCallback(() => {
-    if (distance >= THRESHOLD) onRefresh()
-    setPulling(false); setDistance(0); startY.current = null
-  }, [distance, onRefresh])
+    if (active.current && distance >= THRESHOLD) onRefresh()
+    setDistance(0); startY.current = null; active.current = false
+  }, [distance, onRefresh, THRESHOLD])
 
-  return { pulling, distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd }
+  return { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd }
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -726,8 +737,9 @@ export default function App() {
     }, 800)
   }
 
-  const { pulling, distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd } =
-    usePullToRefresh(handleRefresh)
+  const scrollRef = useRef(null)
+  const { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd } =
+    usePullToRefresh(handleRefresh, scrollRef)
 
   const range    = getFilterRange(activeFilter, customRange)
   const filtered = expenses
@@ -779,6 +791,7 @@ export default function App() {
       {/* Scrollable list with pull-to-refresh */}
       <div
         key={listKey}
+        ref={scrollRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
