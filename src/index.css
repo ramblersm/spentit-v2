@@ -6,21 +6,22 @@
 }
 
 :root {
-  --bg: #0f0e0c;
-  --bg-card: #1a1916;
-  --bg-elevated: #242320;
-  --bg-sheet: #1e1d1b;
-  --border: rgba(255,255,255,0.07);
-  --border-strong: rgba(255,255,255,0.12);
-  --text-primary: #f0ede8;
-  --text-secondary: #8a8680;
-  --text-tertiary: #5a5753;
-  --accent: #e8a847;
-  --accent-dim: rgba(232, 168, 71, 0.12);
-  --accent-glow: rgba(232, 168, 71, 0.25);
-  --danger: #e85555;
-  --danger-dim: rgba(232, 85, 85, 0.12);
-  --success: #5bc48a;
+  --bg: #f5f7ff;
+  --bg-card: #ffffff;
+  --bg-elevated: #eef1fd;
+  --bg-sheet: #ffffff;
+  --border: rgba(67, 97, 216, 0.12);
+  --border-strong: rgba(67, 97, 216, 0.22);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+  --accent: #4361d8;
+  --accent-light: #eef1fd;
+  --accent-dim: rgba(67, 97, 216, 0.1);
+  --accent-glow: rgba(67, 97, 216, 0.2);
+  --danger: #e24b4a;
+  --danger-dim: rgba(226, 75, 74, 0.1);
+  --success: #1a7a4a;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
@@ -31,10 +32,7 @@
   --safe-bottom: env(safe-area-inset-bottom);
 }
 
-html {
-  height: 100%;
-  overflow: hidden;
-}
+html { height: 100%; overflow: hidden; }
 
 body {
   font-family: var(--font-body);
@@ -47,49 +45,30 @@ body {
   overscroll-behavior: none;
 }
 
-#root {
-  height: 100%;
-  overflow: hidden;
-}
+#root { height: 100%; overflow: hidden; }
 
-button {
-  font-family: var(--font-body);
-  border: none;
-  cursor: pointer;
-  background: none;
-  color: inherit;
-}
-
-input, textarea {
-  font-family: var(--font-body);
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
+button { font-family: var(--font-body); border: none; cursor: pointer; background: none; color: inherit; }
+input, textarea { font-family: var(--font-body); }
+::-webkit-scrollbar { display: none; }
 
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
-
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 @keyframes popIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  70% { transform: scale(1.05); }
+  0% { transform: scale(0.85); opacity: 0; }
+  70% { transform: scale(1.03); }
   100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
