@@ -30,6 +30,7 @@ const RANKS = [
 
 const STORAGE_KEY    = 'spentit_v2_expenses'
 const SPLASH_SHOWN   = 'spentit_splash_shown'
+const STREAK_KEY     = 'spentit_v2_streak'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -79,7 +80,30 @@ function getRank(avgPerDay) {
   return RANKS[RANKS.length - 1]
 }
 
-function buildExportText(expenses) {
+// ─── Streak helpers ───────────────────────────────────────────────────────────
+
+function loadStreak() {
+  try { return JSON.parse(localStorage.getItem(STREAK_KEY)) || { count: 0, lastDate: null } }
+  catch { return { count: 0, lastDate: null } }
+}
+
+function computeStreak(expenses) {
+  // Get unique sorted dates that have expenses (desc)
+  const dates = [...new Set(expenses.map(e => e.date))].sort((a, b) => b.localeCompare(a))
+  if (!dates.length) return 0
+  const t         = today()
+  const yesterday = toDateStr(new Date(Date.now() - 86400000))
+  // Streak only counts if today OR yesterday has an entry (still active)
+  if (dates[0] !== t && dates[0] !== yesterday) return 0
+  let streak = 0
+  let cursor = dates[0] === t ? new Date() : new Date(yesterday + 'T00:00:00')
+  for (const d of dates) {
+    const expected = toDateStr(cursor)
+    if (d === expected) { streak++; cursor = new Date(cursor.getTime() - 86400000) }
+    else break
+  }
+  return streak
+}(expenses) {
   if (!expenses.length) return ''
   const grouped = {}
   expenses.forEach(e => { if (!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e) })
@@ -508,9 +532,9 @@ function ExportSheet({ expenses, onClose }) {
 
 // ─── Add Expense Sheet ────────────────────────────────────────────────────────
 
-function AddExpenseSheet({ onClose, onAdd }) {
-  const [step,     setStep]     = useState('amount')
-  const [amount,   setAmount]   = useState('')
+function AddExpenseSheet({ onClose, onAdd, seedAmount = null }) {
+  const [step,     setStep]     = useState(seedAmount ? 'details' : 'amount')
+  const [amount,   setAmount]   = useState(seedAmount ? String(seedAmount) : '')
   const [category, setCategory] = useState('food')
   const [note,     setNote]     = useState('')
   const [date,     setDate]     = useState(today())
@@ -700,6 +724,237 @@ function PullIndicator({ distance, threshold, refreshing }) {
   )
 }
 
+// ─── Streak Badge ─────────────────────────────────────────────────────────────
+
+function StreakBadge({ expenses }) {
+  const streak = computeStreak(expenses)
+  const [prev,    setPrev]    = useState(streak)
+  const [animate, setAnimate] = useState(false)
+
+  useEffect(() => {
+    if (streak > prev) { setAnimate(true); setTimeout(() => setAnimate(false), 600) }
+    setPrev(streak)
+  }, [streak])
+
+  if (streak === 0) return null
+
+  const flameSize = streak >= 7 ? 15 : 13
+  const label     = streak >= 7  ? `${streak} 🔥` :
+                    streak >= 3  ? `${streak} 🔥` :
+                    `${streak}d`
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 4,
+      padding: '4px 10px', borderRadius: 20,
+      background: streak >= 7 ? '#fff3e0' : '#fff8e1',
+      border: `1px solid ${streak >= 7 ? '#ffb74d' : '#ffe082'}`,
+      color: streak >= 7 ? '#e65100' : '#f57f17',
+      fontSize: 12, fontWeight: 700,
+      animation: animate ? 'rankPop 0.5s cubic-bezier(0.34,1.56,0.64,1)' : 'none',
+      cursor: 'default',
+      title: `${streak}-day logging streak!`,
+    }}>
+      <span style={{
+        fontSize: flameSize,
+        display: 'inline-block',
+        animation: streak >= 3 ? 'streakFlame 1.4s ease-in-out infinite' : 'none',
+      }}>🔥</span>
+      <span>{streak}d</span>
+    </div>
+  )
+}
+
+// ─── Calc Sheet ───────────────────────────────────────────────────────────────
+
+function CalcSheet({ onClose, onSaveAsExpense }) {
+  const [tape,    setTape]    = useState([])   // array of numbers
+  const [current, setCurrent] = useState('')   // current input string
+  const [totalAnim, setTotalAnim] = useState(false)
+
+  const total = tape.reduce((s, n) => s + n, 0)
+
+  function handleKey(val) {
+    if (val === 'del') { setCurrent(p => p.slice(0, -1)); return }
+    if (val === 'C')   { setCurrent(''); return }
+    if (val === '.' && current.includes('.')) return
+    if (current.includes('.') && current.split('.')[1]?.length >= 2) return
+    if (current.replace('.','').length >= 8) return
+    setCurrent(p => p + val)
+  }
+
+  function handleAdd() {
+    const n = parseFloat(current)
+    if (!current || isNaN(n) || n <= 0) return
+    setTape(p => [...p, n])
+    setCurrent('')
+    setTotalAnim(true)
+    setTimeout(() => setTotalAnim(false), 400)
+  }
+
+  function handleRemoveTape(idx) {
+    setTape(p => p.filter((_, i) => i !== idx))
+  }
+
+  function handleSave() {
+    if (total <= 0) return
+    onSaveAsExpense(total)
+    onClose()
+  }
+
+  const keys = ['7','8','9','4','5','6','1','2','3','.','0','del']
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.35)', zIndex: 50, backdropFilter: 'blur(4px)' }} />
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 51,
+        background: 'var(--bg-sheet)',
+        borderRadius: '28px 28px 0 0',
+        border: '1px solid var(--border-strong)', borderBottom: 'none',
+        paddingBottom: 'calc(24px + var(--safe-bottom))',
+        animation: 'slideUp 0.35s cubic-bezier(0.32,0.72,0,1)',
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 14, paddingBottom: 4, flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
+        </div>
+
+        {/* Title row */}
+        <div style={{ padding: '6px 20px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>🧮 Expense Calculator</p>
+            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 1 }}>Add items, then save total as expense</p>
+          </div>
+          <button onClick={onClose} style={{ fontSize: 20, color: 'var(--text-tertiary)', padding: 4 }}>✕</button>
+        </div>
+
+        {/* Tape */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px 4px', minHeight: 60 }}>
+          {tape.length === 0 && (
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', padding: '10px 0' }}>
+              Enter amounts and tap + to add them
+            </p>
+          )}
+          {tape.map((n, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '7px 10px', marginBottom: 4,
+              background: 'var(--bg)', borderRadius: 10,
+              border: '1px solid var(--border)',
+              animation: 'calcTapeIn 0.2s ease',
+            }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Item {i + 1}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 16, color: 'var(--text-primary)' }}>
+                  {formatCurrency(n)}
+                </span>
+                <button onClick={() => handleRemoveTape(i)} style={{ fontSize: 14, color: 'var(--danger)', padding: '0 2px' }}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Total bar */}
+        <div style={{
+          margin: '6px 20px',
+          padding: '10px 14px',
+          background: total > 0 ? 'var(--accent-dim)' : 'var(--bg-elevated)',
+          borderRadius: 14,
+          border: '1px solid ' + (total > 0 ? 'var(--border-strong)' : 'var(--border)'),
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 500 }}>
+            {tape.length > 0 ? `${tape.length} item${tape.length > 1 ? 's' : ''}` : 'Total'}
+          </span>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontStyle: 'italic',
+            fontSize: 22, color: total > 0 ? 'var(--accent)' : 'var(--text-tertiary)',
+            letterSpacing: '-0.02em',
+            animation: totalAnim ? 'totalPop 0.35s ease' : 'none',
+          }}>
+            {total > 0 ? formatCurrency(total) : '₹0'}
+          </span>
+        </div>
+
+        {/* Current input display */}
+        <div style={{
+          margin: '0 20px 8px',
+          padding: '10px 14px',
+          background: 'var(--bg-elevated)',
+          borderRadius: 14,
+          border: '1px solid var(--border-strong)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Add item</span>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontStyle: 'italic',
+            fontSize: 22, color: current ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            letterSpacing: '-0.02em',
+          }}>
+            ₹{current || '0'}
+          </span>
+        </div>
+
+        {/* Numpad */}
+        <div style={{ padding: '0 20px', flexShrink: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7, marginBottom: 8 }}>
+            {keys.map(k => (
+              <button key={k} onClick={() => handleKey(k)}
+                onTouchStart={e => e.currentTarget.style.transform = 'scale(0.91)'}
+                onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+                style={{
+                  padding: '14px 8px', borderRadius: 12,
+                  fontSize: k === 'del' ? 16 : 18, fontWeight: 500,
+                  background: k === 'del' ? 'var(--bg)' : 'var(--bg-elevated)',
+                  color:      k === 'del' ? 'var(--text-secondary)' : 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  transition: 'transform 0.08s ease',
+                }}>
+                {k === 'del' ? '⌫' : k}
+              </button>
+            ))}
+          </div>
+
+          {/* Action row */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleAdd}
+              disabled={!current || parseFloat(current) <= 0}
+              style={{
+                flex: 1, padding: '14px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 15, fontWeight: 600,
+                background: (!current || parseFloat(current) <= 0) ? 'var(--bg-elevated)' : '#1a7a4a',
+                color:      (!current || parseFloat(current) <= 0) ? 'var(--text-tertiary)' : '#fff',
+                border: 'none', cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}>
+              + Add
+            </button>
+            <button onClick={handleSave}
+              disabled={total <= 0}
+              style={{
+                flex: 2, padding: '14px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 15, fontWeight: 700,
+                background: total <= 0 ? 'var(--bg-elevated)' : 'var(--accent)',
+                color:      total <= 0 ? 'var(--text-tertiary)' : '#fff',
+                border: 'none', cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: total > 0 ? '0 2px 12px var(--accent-glow)' : 'none',
+              }}>
+              Save ₹{total > 0 ? Math.round(total).toLocaleString('en-IN') : '0'} →
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -708,6 +963,8 @@ export default function App() {
   const [customRange,   setCustomRange]   = useState({ from: today(), to: today() })
   const [showSheet,     setShowSheet]     = useState(false)
   const [showExport,    setShowExport]    = useState(false)
+  const [showCalc,      setShowCalc]      = useState(false)
+  const [calcSeedAmount,setCalcSeedAmount]= useState(null)
   const [showSplash,    setShowSplash]    = useState(() => !sessionStorage.getItem(SPLASH_SHOWN))
   const [showChime,     setShowChime]     = useState(false)
   const [refreshing,    setRefreshing]    = useState(false)
@@ -722,6 +979,11 @@ export default function App() {
   }
 
   function deleteExpense(id) { setExpenses(p => p.filter(e => e.id !== id)) }
+
+  function handleSaveFromCalc(amount) {
+    setCalcSeedAmount(amount)
+    setShowSheet(true)
+  }
 
   function handleSplashDone() {
     sessionStorage.setItem(SPLASH_SHOWN, '1')
@@ -768,15 +1030,24 @@ export default function App() {
             </h1>
             <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Track your spends easy! 💸</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <StreakBadge expenses={expenses} />
             <RankBadge expenses={filtered} />
+            <button onClick={() => setShowCalc(true)} style={{
+              width: 34, height: 34, borderRadius: '50%',
+              fontSize: 16,
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-strong)',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }} title="Expense Calculator">🧮</button>
             {filtered.length > 0 && (
               <button onClick={() => setShowExport(true)} style={{
-                padding: '6px 12px', borderRadius: 20,
+                padding: '6px 10px', borderRadius: 20,
                 fontSize: 12, fontWeight: 500,
                 background: 'var(--bg-elevated)', color: 'var(--accent)',
                 border: '1px solid var(--border-strong)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4,
+                display: 'flex', alignItems: 'center', gap: 3,
               }}>
                 <span style={{ fontSize: 12 }}>📤</span> Export
               </button>
@@ -840,8 +1111,9 @@ export default function App() {
         onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
       >+</button>
 
-      {showSheet  && <AddExpenseSheet onClose={() => setShowSheet(false)} onAdd={addExpense} />}
+      {showSheet  && <AddExpenseSheet onClose={() => { setShowSheet(false); setCalcSeedAmount(null) }} onAdd={addExpense} seedAmount={calcSeedAmount} />}
       {showExport && <ExportSheet expenses={filtered} onClose={() => setShowExport(false)} />}
+      {showCalc   && <CalcSheet onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
     </div>
   )
 }
