@@ -485,6 +485,27 @@ function FilterBar({ activeFilter, onFilterChange, customRange, onCustomRangeCha
   )
 }
 
+// ─── Type Filter Bar ──────────────────────────────────────────────────────────
+
+function TypeFilterBar({ active, onChange }) {
+  return (
+    <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8 }}>
+      {['all','personal','shared'].map(t => (
+        <button key={t} onClick={() => onChange(t)} style={{
+          padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500,
+          background: active === t ? 'var(--accent)' : 'var(--bg-card)',
+          color:      active === t ? '#ffffff'       : 'var(--text-secondary)',
+          border: '1px solid ' + (active === t ? 'var(--accent)' : 'var(--border-strong)'),
+          boxShadow: active === t ? '0 2px 8px var(--accent-glow)' : 'none',
+          cursor: 'pointer',
+        }}>
+          {t === 'all' ? 'All' : t === 'personal' ? '👤 Personal' : '👥 Shared'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ─── Weather Bar ──────────────────────────────────────────────────────────────
 
 function WeatherBar() {
@@ -550,8 +571,10 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
           onClick={() => { if (!swiped) setShowDetail(true) }}
           style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px',
-            background: 'var(--bg-card)', borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
+            background: expense.type === 'shared' ? 'rgba(26,122,74,0.04)' : 'var(--bg-card)',
+            borderRadius: 'var(--radius-md)',
+            border: expense.type === 'shared' ? '1px solid rgba(26,122,74,0.18)' : '1px solid var(--border)',
+            borderLeft: expense.type === 'shared' ? '3px solid #1a7a4a' : undefined,
             transform: swiped ? 'translateX(-72px)' : 'translateX(0)',
             transition: 'transform 0.2s ease',
             position: 'relative', zIndex: 1, cursor: 'pointer',
@@ -673,7 +696,8 @@ function ExportSheet({ expenses, onClose }) {
 
 function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmount = null }) {
   const isEdit = !!editExpense
-  const [step,     setStep]     = useState(isEdit || seedAmount ? 'details' : 'amount')
+  const [step,     setStep]     = useState(isEdit || seedAmount ? 'details' : 'type')
+  const [type,     setType]     = useState(isEdit ? (editExpense.type || 'personal') : (localStorage.getItem('spentit_last_type') || 'personal'))
   const [amount,   setAmount]   = useState(isEdit ? String(editExpense.amount) : seedAmount ? String(seedAmount) : '')
   const [category, setCategory] = useState(isEdit ? editExpense.category : 'food')
   const [note,     setNote]     = useState(isEdit ? editExpense.note : '')
@@ -692,9 +716,9 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
   function handleSubmit() {
     if (!amount || parseFloat(amount) <= 0) return
     if (isEdit) {
-      onUpdate({ ...editExpense, amount: parseFloat(amount), category, note: note.trim(), date })
+      onUpdate({ ...editExpense, amount: parseFloat(amount), category, note: note.trim(), date, type })
     } else {
-      onAdd({ id: genId(), amount: parseFloat(amount), category, note: note.trim(), date, createdAt: Date.now() })
+      onAdd({ id: genId(), amount: parseFloat(amount), category, note: note.trim(), date, createdAt: Date.now(), type })
     }
     onClose()
   }
@@ -706,7 +730,24 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
       <div onClick={onClose} style={sheetBackdrop} />
       <div style={{ ...sheetBase, paddingBottom: 'calc(24px + var(--safe-bottom))', maxHeight: '92vh', overflow: 'hidden' }}>
         <SheetHandle />
-        {step === 'amount' ? (
+        {step === 'type' ? (
+          <div style={{ padding: '12px 20px 28px' }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>What kind of expense?</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              {[['personal','👤','Personal'],['shared','👥','Shared']].map(([val,emoji,label]) => (
+                <button key={val} onClick={() => { setType(val); localStorage.setItem('spentit_last_type', val); setStep('amount') }} style={{
+                  flex: 1, padding: '20px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                  background: type === val ? (val === 'shared' ? 'rgba(26,122,74,0.08)' : 'var(--accent-dim)') : 'var(--bg-elevated)',
+                  border: '2px solid ' + (type === val ? (val === 'shared' ? '#1a7a4a' : 'var(--accent)') : 'var(--border-strong)'),
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{ fontSize: 28 }}>{emoji}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : step === 'amount' ? (
           <div style={{ padding: '0 24px' }}>
             <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: 16 }}>How much did you spend?</p>
             <div style={{ textAlign: 'center', marginBottom: 22, padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
@@ -732,6 +773,17 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
             <div style={{ textAlign: 'center', marginBottom: 18 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 34, color: 'var(--accent)', letterSpacing: '-0.02em' }}>₹{amount}</span>
             </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {[['personal','👤 Personal'],['shared','👥 Shared']].map(([val,label]) => (
+                <button key={val} onClick={() => setType(val)} style={{
+                  flex: 1, padding: '9px', borderRadius: 'var(--radius-sm)', fontSize: 13, fontWeight: 500,
+                  background: type === val ? (val === 'shared' ? 'rgba(26,122,74,0.1)' : 'var(--accent-dim)') : 'var(--bg-elevated)',
+                  border: '1.5px solid ' + (type === val ? (val === 'shared' ? '#1a7a4a' : 'var(--accent)') : 'var(--border-strong)'),
+                  color: type === val ? (val === 'shared' ? '#1a7a4a' : 'var(--accent)') : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}>{label}</button>
+              ))}
+            </div>
             <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Category</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 18 }}>
               {CATEGORIES.map(cat => (
@@ -752,7 +804,7 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
             </button>
             {showDate && <input type="date" value={date} max={today()} onChange={e => setDate(e.target.value)} style={{ ...dateInputStyle, marginBottom: 8, animation: 'fadeSlideIn 0.2s ease' }} />}
             <div style={{ display: 'flex', gap: 10, marginTop: 14, paddingBottom: 8 }}>
-              {!isEdit && <button onClick={() => setStep('amount')} style={{ flex: 1, padding: '14px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, border: '1px solid var(--border)' }}>← Back</button>}
+              {!isEdit && <button onClick={() => setStep('amount')} style={{ flex: 1, padding: '14px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, border: '1px solid var(--border)', cursor: 'pointer' }}>← Back</button>}
               <button onClick={handleSubmit} style={{ flex: 2, padding: '14px', borderRadius: 'var(--radius-md)', background: 'var(--accent)', color: '#ffffff', fontSize: 15, fontWeight: 700, border: 'none', boxShadow: '0 2px 12px var(--accent-glow)', cursor: 'pointer' }}>
                 {isEdit ? '✓ Save Changes' : 'Save Expense'}
               </button>
@@ -849,6 +901,7 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
 export default function App() {
   const [expenses,       setExpenses]       = useState(() => loadExp())
   const [activeFilter,   setActiveFilter]   = useState('today')
+  const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [customRange,    setCustomRange]    = useState({ from: today(), to: today() })
   const [showSheet,      setShowSheet]      = useState(false)
   const [showExport,     setShowExport]     = useState(false)
@@ -859,12 +912,34 @@ export default function App() {
   const [listKey,        setListKey]        = useState(0)
   const [editExpense,    setEditExpense]    = useState(null)
   const [calcSeedAmount, setCalcSeedAmount] = useState(null)
+  const [undoToast,      setUndoToast]      = useState(null)
+  const undoTimerRef = useRef(null)
 
   useEffect(() => { saveExp(expenses) }, [expenses])
 
+  function showUndo(message, snapshot) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    setUndoToast({ message, snapshot, fading: false })
+    undoTimerRef.current = setTimeout(() => {
+      setUndoToast(t => t ? { ...t, fading: true } : null)
+      setTimeout(() => setUndoToast(null), 400)
+    }, 5000)
+  }
+
   function addExpense(exp)    { setExpenses(p => [exp, ...p]); playChime(); setShowChime(true) }
-  function deleteExpense(id)  { setExpenses(p => p.filter(e => e.id !== id)) }
-  function updateExpense(exp) { setExpenses(p => p.map(e => e.id === exp.id ? exp : e)); playChime(); setShowChime(true) }
+  function deleteExpense(id)  {
+    const snapshot = [...expenses]
+    const exp = expenses.find(e => e.id === id)
+    const cat = getCat(exp.category)
+    setExpenses(p => p.filter(e => e.id !== id))
+    showUndo(`${cat.emoji} ${exp.note || cat.label} deleted`, snapshot)
+  }
+  function updateExpense(exp) {
+    const snapshot = [...expenses]
+    setExpenses(p => p.map(e => e.id === exp.id ? exp : e))
+    playChime(); setShowChime(true)
+    showUndo('✏️ Expense updated', snapshot)
+  }
 
   function handleEdit(exp)   { setEditExpense(exp); setShowSheet(true) }
   function handleCloseSheet() { setShowSheet(false); setEditExpense(null); setCalcSeedAmount(null) }
@@ -880,7 +955,7 @@ export default function App() {
   const { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(handleRefresh, scrollRef)
 
   const range      = getFilterRange(activeFilter, customRange)
-  const filtered   = expenses.filter(e => e.date >= range.from && e.date <= range.to).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+  const filtered   = expenses.filter(e => e.date >= range.from && e.date <= range.to).filter(e => activeTypeFilter === 'all' || (e.type || 'personal') === activeTypeFilter).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
   const grouped    = filtered.reduce((acc, e) => { if (!acc[e.date]) acc[e.date] = []; acc[e.date].push(e); return acc }, {})
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
@@ -909,6 +984,7 @@ export default function App() {
 
       <SummaryCard expenses={filtered} filter={activeFilter} />
       <FilterBar   activeFilter={activeFilter} onFilterChange={setActiveFilter} customRange={customRange} onCustomRangeChange={setCustomRange} />
+      <TypeFilterBar active={activeTypeFilter} onChange={setActiveTypeFilter} />
       <WeatherBar />
 
       {/* List */}
@@ -928,6 +1004,26 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      {/* Undo Toast */}
+      {undoToast && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(28px + var(--safe-bottom) + 68px)', left: 20, right: 20, zIndex: 45,
+          background: '#1f2937', color: '#fff', borderRadius: 'var(--radius-md)', padding: '12px 14px',
+          display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+          animation: undoToast.fading ? 'toastFadeOut 0.4s ease forwards' : 'toastSlideUp 0.3s cubic-bezier(0.32,0.72,0,1)',
+        }}>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{undoToast.message}</span>
+          <button onClick={() => { setExpenses(undoToast.snapshot); clearTimeout(undoTimerRef.current); setUndoToast(null) }}
+            style={{ padding: '5px 12px', borderRadius: 20, background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            Undo
+          </button>
+          <button onClick={() => { clearTimeout(undoTimerRef.current); setUndoToast(null) }}
+            style={{ padding: '4px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, border: 'none', cursor: 'pointer' }}>
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* FAB */}
       <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.90)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
