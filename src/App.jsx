@@ -892,20 +892,18 @@ export default function App() {
       {/* Header */}
       <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', animation: 'headerAppear 0.5s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>SpentIt</h1>
-            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Track your spends easy! 💸</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <StreakBadge expenses={expenses} />
-            <RankBadge   expenses={filtered} />
-            <button onClick={() => setShowCalc(true)} style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 16, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🧮</button>
-            {filtered.length > 0 && (
-              <button onClick={() => setShowExport(true)} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span>📤</span> Export
-              </button>
-            )}
-          </div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>SpentIt</h1>
+          {filtered.length > 0 && (
+            <button onClick={() => setShowExport(true)} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span>📤</span> Export
+            </button>
+          )}
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Track your spends easy! 💸</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <StreakBadge expenses={expenses} />
+          <RankBadge   expenses={filtered} />
+          <button onClick={() => setShowCalc(true)} style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 16, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🧮</button>
         </div>
       </div>
 
