@@ -571,7 +571,7 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
           onClick={() => { if (!swiped) setShowDetail(true) }}
           style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px',
-            background: expense.type === 'shared' ? 'rgba(26,122,74,0.04)' : 'var(--bg-card)',
+            background: expense.type === 'shared' ? '#f5fbf7' : 'var(--bg-card)',
             borderRadius: 'var(--radius-md)',
             border: expense.type === 'shared' ? '1px solid rgba(26,122,74,0.18)' : '1px solid var(--border)',
             borderLeft: expense.type === 'shared' ? '3px solid #1a7a4a' : undefined,
