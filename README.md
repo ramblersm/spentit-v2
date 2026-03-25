@@ -36,9 +36,10 @@ The app will launch full-screen, offline-capable, with your custom icon.
 - 🗂 Quick filters: Today / This Week / This Month / Custom date range
 - ➕ Two-step add flow: Amount (numpad) → Category + optional Note/Date
 - 👆 Swipe-to-delete on expense rows
-- 💾 All data stored in localStorage — no sign-in, works offline
-- 📱 Safe area insets for iPhone notch/home indicator
-- 🎨 Warm dark theme with amber accent
+-  Edit expenses and undo toasts
+-  Gamification: streaks, spend badges
+-  Expense types: personal, shared
+-  Export Expense list for Splitwise or personal notes
 
 ## Customising Currency
 
