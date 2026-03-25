@@ -563,7 +563,7 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
         position: 'relative', overflow: 'hidden',
         animation: deleting ? 'rowDelete 0.38s ease forwards' : 'popIn 0.28s cubic-bezier(0.34,1.56,0.64,1)',
       }}>
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, background: 'var(--danger-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-md)' }}>
           <span style={{ fontSize: 18 }}>🗑️</span>
         </div>
         <div
