@@ -985,6 +985,7 @@ function SignInSheet({ onClose }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 async function upsertUser(user) {
+  if (!supabase) return
   await supabase.from('users').upsert({
     id: user.id,
     email: user.email,
