@@ -21,12 +21,11 @@ export function useAuth() {
 
   async function signIn(email) {
     if (!supabase) return { error: 'Auth not configured' }
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
     })
-    return res.json()
+    return error ? { error: error.message } : { success: true }
   }
 
   async function signOut() {
