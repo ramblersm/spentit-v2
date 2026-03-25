@@ -6,6 +6,8 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!supabase) { setLoading(false); return }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
@@ -18,6 +20,7 @@ export function useAuth() {
   }, [])
 
   async function signIn(email) {
+    if (!supabase) return { error: 'Auth not configured' }
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,6 +30,7 @@ export function useAuth() {
   }
 
   async function signOut() {
+    if (!supabase) return
     await supabase.auth.signOut()
   }
 
