@@ -1,6 +1,6 @@
 # SpentIt v2 💸
 
-A modern, PWA-ready expense tracker. Dark-mode first, works offline, no backend needed.
+A modern, PWA-ready expense tracker.
 
 ## Stack
 - **React 18** + **Vite 5**
