@@ -583,7 +583,16 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
           <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: cat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{cat.emoji}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.note || cat.label}</p>
-            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 1 }}>{cat.label}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{cat.label}</p>
+              <span style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: '0.02em',
+                padding: '1px 6px', borderRadius: 99,
+                background: expense.type === 'shared' ? 'rgba(26,122,74,0.1)' : 'var(--accent-dim)',
+                color: expense.type === 'shared' ? '#1a7a4a' : 'var(--accent)',
+                border: expense.type === 'shared' ? '1px solid rgba(26,122,74,0.2)' : '1px solid var(--accent-glow)',
+              }}>{expense.type === 'shared' ? 'Shared' : 'Personal'}</span>
+            </div>
           </div>
           <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--text-primary)', letterSpacing: '-0.02em', flexShrink: 0 }}>{formatCurrency(expense.amount)}</p>
           {swiped && <button onClick={handleDelete} style={{ position: 'absolute', right: -64, width: 56, top: 0, bottom: 0, background: 'var(--danger)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>Del</button>}
