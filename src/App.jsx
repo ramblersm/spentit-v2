@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useAuth } from './useAuth'
+import { supabase } from './supabase'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -905,14 +907,99 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
   )
 }
 
+// ─── Sign-In Sheet ────────────────────────────────────────────────────────────
+
+function SignInSheet({ onClose }) {
+  const { user, signIn, signOut } = useAuth()
+  const [email,   setEmail]   = useState('')
+  const [sent,    setSent]    = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState(null)
+
+  async function handleSend() {
+    if (!email.trim()) return
+    setLoading(true); setError(null)
+    const res = await signIn(email.trim())
+    setLoading(false)
+    if (res.error) setError(res.error)
+    else setSent(true)
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={sheetBackdrop} />
+      <div style={{ ...sheetBase, paddingBottom: 'calc(32px + var(--safe-bottom))' }}>
+        <SheetHandle />
+        <div style={{ padding: '4px 20px 0' }}>
+          <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+            {user ? 'Your account' : 'Sign in'}
+          </p>
+
+          {user ? (
+            <>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>{user.email}</p>
+              <button
+                onClick={() => { signOut(); onClose() }}
+                style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--danger-dim)', color: 'var(--danger)', fontSize: 14, fontWeight: 600, border: '1px solid var(--danger-dim)', cursor: 'pointer' }}
+              >Sign out</button>
+            </>
+          ) : sent ? (
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <p style={{ fontSize: 32, marginBottom: 12 }}>✉️</p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Check your email</p>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>A sign-in link was sent to <strong>{email}</strong></p>
+            </div>
+          ) : (
+            <>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>Get a magic link — no password needed.</p>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                style={{
+                  width: '100%', padding: '13px 14px', borderRadius: 'var(--radius-md)',
+                  border: '1.5px solid var(--border-strong)', background: 'var(--bg-elevated)',
+                  fontSize: 15, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
+                }}
+              />
+              {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 10 }}>{error}</p>}
+              <button
+                onClick={handleSend}
+                disabled={loading || !email.trim()}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: 'var(--radius-md)',
+                  background: loading || !email.trim() ? 'var(--border-strong)' : 'var(--accent)',
+                  color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: loading || !email.trim() ? 'default' : 'pointer',
+                }}
+              >{loading ? 'Sending…' : 'Send magic link'}</button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
+async function upsertUser(user) {
+  await supabase.from('users').upsert({
+    id: user.id,
+    email: user.email,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  }, { onConflict: 'id' })
+}
+
 export default function App() {
+  const { user, loading: authLoading, signIn, signOut } = useAuth()
   const [expenses,       setExpenses]       = useState(() => loadExp())
   const [activeFilter,   setActiveFilter]   = useState('today')
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [customRange,    setCustomRange]    = useState({ from: today(), to: today() })
   const [showSheet,      setShowSheet]      = useState(false)
+  const [showSignIn,     setShowSignIn]     = useState(false)
   const [showExport,     setShowExport]     = useState(false)
   const [showCalc,       setShowCalc]       = useState(false)
   const [showSplash,     setShowSplash]     = useState(() => !sessionStorage.getItem(SPLASH_SHOWN))
@@ -923,6 +1010,8 @@ export default function App() {
   const [calcSeedAmount, setCalcSeedAmount] = useState(null)
   const [undoToast,      setUndoToast]      = useState(null)
   const undoTimerRef = useRef(null)
+
+  useEffect(() => { if (user) upsertUser(user) }, [user])
 
   useEffect(() => { saveExp(expenses) }, [expenses])
 
@@ -977,11 +1066,17 @@ export default function App() {
       <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', animation: 'headerAppear 0.5s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>SpentIt</h1>
-          {filtered.length > 0 && (
-            <button onClick={() => setShowExport(true)} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span>📤</span> Export
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {filtered.length > 0 && (
+              <button onClick={() => setShowExport(true)} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span>📤</span> Export
+              </button>
+            )}
+            <button onClick={() => setShowSignIn(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+              {user ? user.email[0].toUpperCase() : '👤'}
+              {user && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 8, height: 8, borderRadius: '50%', background: '#1a7a4a', border: '1.5px solid var(--bg-elevated)' }} />}
             </button>
-          )}
+          </div>
         </div>
         <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Track your spends easy! 💸</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
@@ -1038,9 +1133,10 @@ export default function App() {
       <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.90)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
         style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.12s ease' }}>+</button>
 
-      {showSheet  && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} />}
-      {showExport && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
-      {showCalc   && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
+      {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} />}
+      {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
+      {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} />}
     </div>
   )
 }
