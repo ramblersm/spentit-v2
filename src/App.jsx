@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from './useAuth'
 import { supabase } from './supabase'
+import * as api from './api'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ const STORAGE_KEY  = 'spentit_v2_expenses'
 const SPLASH_SHOWN = 'spentit_splash_shown'
 const STREAK_KEY   = 'spentit_v2_streak'
 const WEATHER_KEY  = 'spentit_v2_weather'
+const MIGRATED_KEY = 'spentit_migrated'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -621,6 +623,7 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
                 ['🕐 Added at', formatTime(expense.createdAt)],
                 ['🗂 Category', cat.label],
                 ['📝 Note',     expense.note || '—'],
+                ['👤 Type',     expense.type === 'shared' ? '👥 Shared' : '👤 Personal'],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{k}</span>
@@ -1010,9 +1013,37 @@ export default function App() {
   const [editExpense,    setEditExpense]    = useState(null)
   const [calcSeedAmount, setCalcSeedAmount] = useState(null)
   const [undoToast,      setUndoToast]      = useState(null)
+  const [syncing,        setSyncing]        = useState(false)
   const undoTimerRef = useRef(null)
 
   useEffect(() => { if (user) upsertUser(user) }, [user])
+
+  // Load expenses from Supabase when signed in
+  useEffect(() => {
+    if (!user) return
+    api.fetchExpenses()
+      .then(data => {
+        const shaped = data.map(e => ({
+          id: e.id, amount: Number(e.amount), category: e.category,
+          note: e.note, type: e.type, date: e.date,
+          createdAt: new Date(e.created_at).getTime(),
+        }))
+        setExpenses(shaped)
+      })
+      .catch(() => {}) // fall back to localStorage on error
+  }, [user])
+
+  // Migrate localStorage → Supabase on first sign-in
+  useEffect(() => {
+    if (!user) return
+    if (localStorage.getItem(MIGRATED_KEY) === 'true') return
+    const local = loadExp()
+    if (!local.length) { localStorage.setItem(MIGRATED_KEY, 'true'); return }
+    setSyncing(true)
+    Promise.all(local.map(e => api.createExpense(e).catch(() => null)))
+      .then(() => { localStorage.setItem(MIGRATED_KEY, 'true'); setSyncing(false) })
+      .catch(() => setSyncing(false))
+  }, [user])
 
   useEffect(() => { saveExp(expenses) }, [expenses])
 
@@ -1025,19 +1056,28 @@ export default function App() {
     }, 5000)
   }
 
-  function addExpense(exp)    { setExpenses(p => [exp, ...p]); playChime(); setShowChime(true) }
-  function deleteExpense(id)  {
+  function addExpense(exp) {
+    setExpenses(p => [exp, ...p])
+    playChime(); setShowChime(true)
+    if (user) api.createExpense(exp).catch(() => {})
+  }
+  function deleteExpense(id) {
     const snapshot = [...expenses]
     const exp = expenses.find(e => e.id === id)
     const cat = getCat(exp.category)
     setExpenses(p => p.filter(e => e.id !== id))
     showUndo(`${cat.emoji} ${exp.note || cat.label} deleted`, snapshot)
+    if (user) api.deleteExpense(id).catch(() => {})
   }
   function updateExpense(exp) {
     const snapshot = [...expenses]
     setExpenses(p => p.map(e => e.id === exp.id ? exp : e))
     playChime(); setShowChime(true)
     showUndo('✏️ Expense updated', snapshot)
+    if (user) api.updateExpense(exp.id, {
+      amount: exp.amount, category: exp.category,
+      note: exp.note, type: exp.type, date: exp.date,
+    }).catch(() => {})
   }
 
   function handleEdit(exp)   { setEditExpense(exp); setShowSheet(true) }
@@ -1062,6 +1102,11 @@ export default function App() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', paddingTop: 'var(--safe-top)' }}>
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
       {showChime  && <ChimeRipple  onDone={() => setShowChime(false)} />}
+      {syncing && (
+        <div style={{ position: 'fixed', top: 'var(--safe-top)', left: 0, right: 0, zIndex: 200, background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 500, textAlign: 'center', padding: '8px 16px', animation: 'fadeIn 0.3s ease' }}>
+          ☁️ Syncing your data…
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', animation: 'headerAppear 0.5s ease' }}>
