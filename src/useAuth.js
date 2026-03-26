@@ -30,10 +30,13 @@ export function useAuth() {
   // a known iOS limitation with magic links + PWAs.
   async function signIn(email) {
     if (!supabase) return { error: 'Auth not configured' }
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
-    })
+    const { error } = await supabase.auth.signInWithOtp({ email })
+    return error ? { error: error.message } : { success: true }
+  }
+
+  async function verifyCode(email, token) {
+    if (!supabase) return { error: 'Auth not configured' }
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
     return error ? { error: error.message } : { success: true }
   }
 
@@ -42,5 +45,5 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, loading, signIn, signOut }
+  return { user, loading, signIn, verifyCode, signOut }
 }
