@@ -913,8 +913,9 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
 // ─── Sign-In Sheet ────────────────────────────────────────────────────────────
 
 function SignInSheet({ onClose }) {
-  const { user, signIn, signOut } = useAuth()
+  const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
+  const [code,    setCode]    = useState('')
   const [sent,    setSent]    = useState(false)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -926,6 +927,21 @@ function SignInSheet({ onClose }) {
     setLoading(false)
     if (res.error) setError(res.error)
     else setSent(true)
+  }
+
+  async function handleVerify() {
+    if (!code.trim()) return
+    setLoading(true); setError(null)
+    const res = await verifyCode(email.trim(), code.trim())
+    setLoading(false)
+    if (res.error) setError(res.error)
+    else onClose()
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '13px 14px', borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--border-strong)', background: 'var(--bg-elevated)',
+    fontSize: 15, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
   }
 
   return (
@@ -947,25 +963,45 @@ function SignInSheet({ onClose }) {
               >Sign out</button>
             </>
           ) : sent ? (
-            <div style={{ textAlign: 'center', padding: '24px 0' }}>
-              <p style={{ fontSize: 32, marginBottom: 12 }}>✉️</p>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Check your email</p>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>A sign-in link was sent to <strong>{email}</strong></p>
-            </div>
+            <>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>
+                Enter the 6-digit code sent to <strong>{email}</strong>
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="123456"
+                value={code}
+                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onKeyDown={e => e.key === 'Enter' && handleVerify()}
+                autoFocus
+                style={{ ...inputStyle, fontSize: 22, letterSpacing: '0.2em', textAlign: 'center' }}
+              />
+              {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 10 }}>{error}</p>}
+              <button
+                onClick={handleVerify}
+                disabled={loading || code.length < 6}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: 'var(--radius-md)',
+                  background: loading || code.length < 6 ? 'var(--border-strong)' : 'var(--accent)',
+                  color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: loading || code.length < 6 ? 'default' : 'pointer',
+                }}
+              >{loading ? 'Verifying…' : 'Verify code'}</button>
+              <button
+                onClick={() => { setSent(false); setCode(''); setError(null) }}
+                style={{ width: '100%', padding: '10px', marginTop: 8, background: 'none', border: 'none', fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer' }}
+              >Use a different email</button>
+            </>
           ) : (
             <>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>Get a magic link — no password needed.</p>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>We'll send a 6-digit code — no password needed.</p>
               <input
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                style={{
-                  width: '100%', padding: '13px 14px', borderRadius: 'var(--radius-md)',
-                  border: '1.5px solid var(--border-strong)', background: 'var(--bg-elevated)',
-                  fontSize: 15, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
-                }}
+                style={inputStyle}
               />
               {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 10 }}>{error}</p>}
               <button
@@ -976,7 +1012,7 @@ function SignInSheet({ onClose }) {
                   background: loading || !email.trim() ? 'var(--border-strong)' : 'var(--accent)',
                   color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: loading || !email.trim() ? 'default' : 'pointer',
                 }}
-              >{loading ? 'Sending…' : 'Send magic link'}</button>
+              >{loading ? 'Sending…' : 'Send code'}</button>
             </>
           )}
         </div>
