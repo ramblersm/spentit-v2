@@ -770,10 +770,11 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 14 }}>
               {keys.map(k => (
-                <button key={k} onClick={() => handleKey(k)}
-                  onTouchStart={e => e.currentTarget.style.transform = 'scale(0.91)'}
+                <button key={k}
+                  onTouchStart={e => { e.preventDefault(); handleKey(k); e.currentTarget.style.transform = 'scale(0.91)' }}
                   onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-                  style={{ padding: '17px 8px', borderRadius: 'var(--radius-md)', fontSize: k === 'del' ? 18 : 20, fontWeight: 500, background: k === 'del' ? 'var(--bg)' : 'var(--bg-elevated)', color: k === 'del' ? 'var(--text-secondary)' : 'var(--text-primary)', border: '1px solid var(--border)', transition: 'transform 0.08s ease' }}>
+                  onClick={() => handleKey(k)}
+                  style={{ padding: '17px 8px', borderRadius: 'var(--radius-md)', fontSize: k === 'del' ? 18 : 20, fontWeight: 500, background: k === 'del' ? 'var(--bg)' : 'var(--bg-elevated)', color: k === 'del' ? 'var(--text-secondary)' : 'var(--text-primary)', border: '1px solid var(--border)', transition: 'transform 0.08s ease', touchAction: 'manipulation' }}>
                   {k === 'del' ? '⌫' : k}
                 </button>
               ))}
@@ -891,10 +892,11 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
         <div style={{ padding: '0 20px', flexShrink: 0 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7, marginBottom: 8 }}>
             {keys.map(k => (
-              <button key={k} onClick={() => handleKey(k)}
-                onTouchStart={e => e.currentTarget.style.transform = 'scale(0.91)'}
+              <button key={k}
+                onTouchStart={e => { e.preventDefault(); handleKey(k); e.currentTarget.style.transform = 'scale(0.91)' }}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-                style={{ padding: '14px 8px', borderRadius: 12, fontSize: k === 'del' ? 16 : 18, fontWeight: 500, background: k === 'del' ? 'var(--bg)' : 'var(--bg-elevated)', color: k === 'del' ? 'var(--text-secondary)' : 'var(--text-primary)', border: '1px solid var(--border)', transition: 'transform 0.08s ease' }}>
+                onClick={() => handleKey(k)}
+                style={{ padding: '14px 8px', borderRadius: 12, fontSize: k === 'del' ? 16 : 18, fontWeight: 500, background: k === 'del' ? 'var(--bg)' : 'var(--bg-elevated)', color: k === 'del' ? 'var(--text-secondary)' : 'var(--text-primary)', border: '1px solid var(--border)', transition: 'transform 0.08s ease', touchAction: 'manipulation' }}>
                 {k === 'del' ? '⌫' : k}
               </button>
             ))}
