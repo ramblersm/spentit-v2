@@ -32,7 +32,7 @@ export function useAuth() {
     if (!supabase) return { error: 'Auth not configured' }
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
     })
     return error ? { error: error.message } : { success: true }
   }
