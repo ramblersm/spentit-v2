@@ -912,7 +912,7 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
 
 // ─── Sign-In Sheet ────────────────────────────────────────────────────────────
 
-function SignInSheet({ onClose }) {
+function SignInSheet({ onClose, onResync }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
@@ -957,6 +957,10 @@ function SignInSheet({ onClose }) {
           {user ? (
             <>
               <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>{user.email}</p>
+              <button
+                onClick={() => { onResync(); onClose() }}
+                style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--accent)', fontSize: 14, fontWeight: 600, border: '1px solid var(--border-strong)', cursor: 'pointer', marginBottom: 10 }}
+              >Re-sync local data to cloud</button>
               <button
                 onClick={() => { signOut(); onClose() }}
                 style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--danger-dim)', color: 'var(--danger)', fontSize: 14, fontWeight: 600, border: '1px solid var(--danger-dim)', cursor: 'pointer' }}
@@ -1235,7 +1239,7 @@ export default function App() {
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
-      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} />}
     </div>
   )
 }
