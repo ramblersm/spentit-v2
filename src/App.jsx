@@ -970,9 +970,9 @@ function SignInSheet({ onClose }) {
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="123456"
+                placeholder="12345678"
                 value={code}
-                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
                 onKeyDown={e => e.key === 'Enter' && handleVerify()}
                 autoFocus
                 style={{ ...inputStyle, fontSize: 22, letterSpacing: '0.2em', textAlign: 'center' }}
