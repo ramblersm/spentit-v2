@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from './useAuth'
 import { supabase } from './supabase'
 import * as api from './api'
+import { track } from './analytics'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1072,7 +1073,13 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => { if (user) upsertUser(user) }, [user])
+  useEffect(() => { if (user) { upsertUser(user); track('login_completed', {}, user.id) } }, [user])
+
+  useEffect(() => {
+    track('app_opened', {
+      platform: navigator.userAgent.includes('iPhone') ? 'ios_pwa' : 'web',
+    }, user?.id || null)
+  }, [])
 
   // Load expenses from Supabase when signed in
   useEffect(() => {
@@ -1118,6 +1125,7 @@ export default function App() {
     setExpenses(p => [exp, ...p])
     playChime(); setShowChime(true)
     if (user) api.createExpense(exp).catch(() => {})
+    track('expense_added', { category: exp.category, type: exp.type, amount: exp.amount, has_note: !!exp.note }, user?.id || null)
   }
   function deleteExpense(id) {
     const snapshot = [...expenses]
@@ -1126,6 +1134,7 @@ export default function App() {
     setExpenses(p => p.filter(e => e.id !== id))
     showUndo(`${cat.emoji} ${exp.note || cat.label} deleted`, snapshot)
     if (user) api.deleteExpense(id).catch(() => {})
+    track('expense_deleted', { category: exp.category }, user?.id || null)
   }
   function updateExpense(exp) {
     const snapshot = [...expenses]
@@ -1136,6 +1145,7 @@ export default function App() {
       amount: exp.amount, category: exp.category,
       note: exp.note, type: exp.type, date: exp.date,
     }).catch(() => {})
+    track('expense_edited', { category: exp.category, type: exp.type }, user?.id || null)
   }
 
   function handleEdit(exp)   { setEditExpense(exp); setShowSheet(true) }
@@ -1172,7 +1182,7 @@ export default function App() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>SpentIt</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {filtered.length > 0 && (
-              <button onClick={() => setShowExport(true)} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <button onClick={() => { track('export_tapped', { expense_count: filtered.length, filter: activeFilter }, user?.id || null); setShowExport(true) }} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <span>📤</span> Export
               </button>
             )}
