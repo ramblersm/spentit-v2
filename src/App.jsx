@@ -1016,6 +1016,22 @@ export default function App() {
   const [syncing,        setSyncing]        = useState(false)
   const undoTimerRef = useRef(null)
 
+  // Pick up magic link tokens from URL (PWA deep link flow)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const accessToken  = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
+    const type         = params.get('type')
+    if (accessToken && refreshToken && type === 'magiclink') {
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(() => window.history.replaceState({}, '', '/'))
+    }
+    const error = params.get('error')
+    if (error === 'auth_failed') {
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
+
   useEffect(() => { if (user) upsertUser(user) }, [user])
 
   // Load expenses from Supabase when signed in
@@ -1152,6 +1168,7 @@ export default function App() {
               </div>
             </div>
           ))}
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', padding: '8px 0 4px' }}>SpentIt v2.0 · Built with 💙</p>
         </div>
       </div>
 
