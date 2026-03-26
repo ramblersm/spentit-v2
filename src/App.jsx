@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth } from './useAuth'
 import { supabase } from './supabase'
 import * as api from './api'
@@ -709,7 +709,20 @@ function ExportSheet({ expenses, onClose }) {
 
 // ─── Add / Edit Expense Sheet ─────────────────────────────────────────────────
 
-function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmount = null }) {
+function getPastNotes(expenses) {
+  const freq = {}
+  expenses.forEach(e => {
+    if (e.note && e.note.trim()) {
+      const n = e.note.trim()
+      freq[n] = (freq[n] || 0) + 1
+    }
+  })
+  return Object.entries(freq)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([note]) => note)
+}
+
+function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmount = null, expenses = [] }) {
   const isEdit = !!editExpense
   const [step,     setStep]     = useState(isEdit || seedAmount ? 'details' : 'type')
   const [type,     setType]     = useState(isEdit ? (editExpense.type || 'personal') : (localStorage.getItem('spentit_last_type') || 'personal'))
@@ -719,6 +732,28 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
   const [date,     setDate]     = useState(isEdit ? editExpense.date : today())
   const [showNote, setShowNote] = useState(isEdit && !!editExpense.note)
   const [showDate, setShowDate] = useState(false)
+  const [ghost,    setGhost]    = useState('')
+  const pastNotes = useMemo(() => getPastNotes(expenses), [expenses])
+
+  function handleNoteChange(e) {
+    const val = e.target.value
+    setNote(val)
+    if (val.trim().length < 2) { setGhost(''); return }
+    const match = pastNotes.find(n =>
+      n.toLowerCase().startsWith(val.toLowerCase()) &&
+      n.toLowerCase() !== val.toLowerCase()
+    )
+    setGhost(match ? match.slice(val.length) : '')
+  }
+  function acceptGhost() {
+    if (!ghost) return
+    setNote(prev => prev + ghost)
+    setGhost('')
+  }
+  function handleNoteKeyDown(e) {
+    if (ghost && e.key === ' ') { e.preventDefault(); acceptGhost() }
+    if (e.key === 'Escape') setGhost('')
+  }
 
   function handleKey(val) {
     if (val === 'del') { setAmount(p => p.slice(0, -1)); return }
@@ -813,7 +848,29 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
               <span>{note || 'Add a note...'}</span>
               <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{showNote ? '▲' : '▼'}</span>
             </button>
-            {showNote && <input autoFocus value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Lunch at Rajdhani" maxLength={60} style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--accent)', color: 'var(--text-primary)', fontSize: 15, outline: 'none', marginBottom: 8, animation: 'fadeSlideIn 0.2s ease' }} />}
+            {showNote && (
+              <div style={{ position: 'relative', marginBottom: 8, animation: 'fadeSlideIn 0.2s ease' }}>
+                {ghost && (
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '12px 44px 12px 14px', fontSize: 15, color: 'var(--text-tertiary)', pointerEvents: 'none', whiteSpace: 'nowrap', overflow: 'hidden', borderRadius: 12, display: 'flex', alignItems: 'center' }}>
+                    <span style={{ visibility: 'hidden' }}>{note}</span>
+                    <span>{ghost}</span>
+                  </div>
+                )}
+                <input
+                  autoFocus
+                  value={note}
+                  onChange={handleNoteChange}
+                  onKeyDown={handleNoteKeyDown}
+                  onBlur={() => setGhost('')}
+                  placeholder={ghost ? '' : 'e.g. Lunch at Rajdhani'}
+                  maxLength={60}
+                  style={{ width: '100%', padding: '12px 44px 12px 14px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--accent)', color: 'var(--text-primary)', fontSize: 15, outline: 'none', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}
+                />
+                {ghost && (
+                  <button onClick={acceptGhost} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', zIndex: 2, width: 28, height: 28, borderRadius: 8, background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</button>
+                )}
+              </div>
+            )}
             <button onClick={() => setShowDate(p => !p)} style={{ width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid ' + (showDate ? 'var(--accent)' : 'var(--border)'), color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>📅 {formatDisplayDate(date)}</span>
               <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{showDate ? '▲' : '▼'}</span>
@@ -1250,7 +1307,7 @@ export default function App() {
       <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.90)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
         style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.12s ease' }}>+</button>
 
-      {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} />}
+      {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
       {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} />}
