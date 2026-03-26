@@ -980,11 +980,11 @@ function SignInSheet({ onClose }) {
               {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 10 }}>{error}</p>}
               <button
                 onClick={handleVerify}
-                disabled={loading || code.length < 6}
+                disabled={loading || code.length < 8}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 'var(--radius-md)',
-                  background: loading || code.length < 6 ? 'var(--border-strong)' : 'var(--accent)',
-                  color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: loading || code.length < 6 ? 'default' : 'pointer',
+                  background: loading || code.length < 8 ? 'var(--border-strong)' : 'var(--accent)',
+                  color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: loading || code.length < 8 ? 'default' : 'pointer',
                 }}
               >{loading ? 'Verifying…' : 'Verify code'}</button>
               <button
@@ -994,7 +994,7 @@ function SignInSheet({ onClose }) {
             </>
           ) : (
             <>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>We'll send a 6-digit code — no password needed.</p>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>We'll send an 8-digit code — no password needed.</p>
               <input
                 type="email"
                 placeholder="you@example.com"
