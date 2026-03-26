@@ -1084,6 +1084,8 @@ export default function App() {
           note: e.note, type: e.type, date: e.date,
           createdAt: new Date(e.created_at).getTime(),
         }))
+        // If Supabase returned nothing but localStorage has data, keep local until migration syncs
+        if (shaped.length === 0 && loadExp().length > 0) return
         setExpenses(shaped)
       })
       .catch(() => {}) // fall back to localStorage on error
