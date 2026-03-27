@@ -5,7 +5,7 @@ A modern, PWA-ready expense tracker.
 ## Stack
 - **React 18** + **Vite 5**
 - **vite-plugin-pwa** for service worker + manifest
-- **localStorage** for persistence (no database)
+- **Supabase** backend
 
 ## Local Development
 
