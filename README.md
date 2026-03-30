@@ -72,12 +72,12 @@ The app will now launch full-screen, offline-capable, with its own icon.
 
 To change the default currency, navigate to `src/App.jsx` and update the `formatCurrency` function:
 
-```js
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', 
-    currency: 'INR', // ← Change this to your desired currency code (e.g., 'USD', 'EUR')
-    ...
-  }).format(amount)
-}
-```
+
+---
+
+## 🤝 Contributors
+
+| Contributor | Logo | Link |
+| :--- | :---: | :--- |
+| **Gemini CLI** | <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/packages/icons-static-png/icons/gemini-cli.png" width="32" height="32" alt="Gemini CLI Logo"> | [GitHub](https://github.com/google-gemini/gemini-cli) |
+| **Claude Code** | <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/packages/icons-static-png/icons/claude-code.png" width="32" height="32" alt="Claude Code Logo"> | [Claude.ai](https://claude.ai) |
