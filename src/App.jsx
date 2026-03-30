@@ -356,11 +356,11 @@ function RankBadge({ expenses }) {
 // ─── Streak Badge ─────────────────────────────────────────────────────────────
 
 function streakAffirmation(streak) {
-  if (streak >= 30) return { msg: "A whole month of mindful spending. You're incredible! 🏆", sub: "Financial awareness is now a part of who you are." }
-  if (streak >= 14) return { msg: "Two weeks strong! Your consistency is inspiring. 💪", sub: "Most people give up long before this. You didn't." }
-  if (streak >= 7)  return { msg: "One full week! You're officially on fire. 🔥", sub: "A week of tracking is where real habits are born." }
-  if (streak >= 3)  return { msg: "You're building something real here! 🎉", sub: "Three days in a row — the hardest part is behind you." }
-  return { msg: "Great start — keep the streak alive! ✨", sub: "Every expert was once a beginner. Day by day." }
+  if (streak >= 30) return { msg: "Incredible dedication! 🏆", sub: "Mindful spending has become a true lifestyle for you." }
+  if (streak >= 14) return { msg: "Amazing consistency! 💪", sub: "You've proven that you can stick with your goals long-term." }
+  if (streak >= 7)  return { msg: "You're officially on fire! 🔥", sub: "You've built the momentum needed to make lasting changes." }
+  if (streak >= 3)  return { msg: "Building real momentum! 🎉", sub: "You've pushed through the initial hurdle of starting a new habit." }
+  return { msg: "Great start — keep it up! ✨", sub: "Small, daily actions lead to big financial wins over time." }
 }
 
 function StreakSheet({ streak, onClose }) {
