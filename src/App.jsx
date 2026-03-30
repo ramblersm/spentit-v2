@@ -65,7 +65,8 @@ const MIGRATED_KEY = 'spentit_migrated'
 const toDateStr = d  => d.toISOString().slice(0, 10)
 const today     = () => toDateStr(new Date())
 
-function formatCurrency(amount) {
+function formatCurrency(amount, isIncognito = false) {
+  if (isIncognito) return '••••'
   return new Intl.NumberFormat('en-IN', {
     style: 'currency', currency: 'INR',
     minimumFractionDigits: 0, maximumFractionDigits: 2,
@@ -302,7 +303,7 @@ function SheetHandle() {
 
 // ─── Rank Badge ───────────────────────────────────────────────────────────────
 
-function RankBadge({ expenses }) {
+function RankBadge({ expenses, isIncognito }) {
   const [showInfo, setShowInfo] = useState(false)
   const [prev,     setPrev]     = useState(null)
   const [anim,     setAnim]     = useState(false)
@@ -334,7 +335,7 @@ function RankBadge({ expenses }) {
             <div style={{ padding: '4px 20px 20px' }}>
               <p style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Your Saver Rank</p>
               <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 16 }}>
-                Based on daily avg spend · currently <strong style={{ color: rank.color }}>{formatCurrency(Math.round(avg))}/day</strong>
+                Based on daily avg spend · currently <strong style={{ color: rank.color }}>{formatCurrency(Math.round(avg), isIncognito)}/day</strong>
               </p>
               {RANKS.map(r => (
                 <div key={r.label} style={{
@@ -429,7 +430,7 @@ function StreakBadge({ expenses }) {
 
 // ─── Summary Card ─────────────────────────────────────────────────────────────
 
-function SummaryCard({ expenses, filter }) {
+function SummaryCard({ expenses, filter, isIncognito }) {
   const [showTopInfo, setShowTopInfo] = useState(false)
   const total = expenses.reduce((s, e) => s + e.amount, 0)
   const count = expenses.length
@@ -449,7 +450,7 @@ function SummaryCard({ expenses, filter }) {
         <div>
           <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</p>
           <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 38, lineHeight: 1, color: total > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)', letterSpacing: '-0.02em' }}>
-            {total > 0 ? formatCurrency(total) : 'nothing yet'}
+            {total > 0 ? formatCurrency(total, isIncognito) : 'nothing yet'}
           </p>
         </div>
         {topCat && (
@@ -479,7 +480,7 @@ function SummaryCard({ expenses, filter }) {
                 </div>
               </div>
               {[
-                ['Total spent',  formatCurrency(topAmt)],
+                ['Total spent',  formatCurrency(topAmt, isIncognito)],
                 ['% of overall', `${topPct}%`],
                 ['Transactions', `${topCount} ${topCount === 1 ? 'entry' : 'entries'}`],
               ].map(([k, v]) => (
@@ -596,7 +597,7 @@ function WeatherBar() {
 
 // ─── Expense Row + Detail Sheet ───────────────────────────────────────────────
 
-function ExpenseRow({ expense, onDelete, onEdit }) {
+function ExpenseRow({ expense, onDelete, onEdit, isIncognito }) {
   const cat = getCat(expense.category)
   const [showDetail, setShowDetail] = useState(false)
   const [swiped,     setSwiped]     = useState(false)
@@ -651,7 +652,7 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
               }}>{expense.type === 'shared' ? 'Shared' : 'Personal'}</span>
             </div>
           </div>
-          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--text-primary)', letterSpacing: '-0.02em', flexShrink: 0 }}>{formatCurrency(expense.amount)}</p>
+          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--text-primary)', letterSpacing: '-0.02em', flexShrink: 0 }}>{formatCurrency(expense.amount, isIncognito)}</p>
           {swiped && <button onClick={handleDelete} style={{ position: 'absolute', right: -64, width: 56, top: 0, bottom: 0, background: 'var(--danger)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>Del</button>}
         </div>
       </div>
@@ -669,7 +670,7 @@ function ExpenseRow({ expense, onDelete, onEdit }) {
                   <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{expense.note || cat.label}</p>
                   <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{cat.label}</p>
                 </div>
-                <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--accent)', letterSpacing: '-0.02em' }}>{formatCurrency(expense.amount)}</p>
+                <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--accent)', letterSpacing: '-0.02em' }}>{formatCurrency(expense.amount, isIncognito)}</p>
               </div>
               {[
                 ['📅 Date',     formatDisplayDate(expense.date)],
@@ -946,7 +947,7 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
 
 // ─── Calc Sheet ───────────────────────────────────────────────────────────────
 
-function CalcSheet({ onClose, onSaveAsExpense }) {
+function CalcSheet({ onClose, onSaveAsExpense, isIncognito }) {
   const [tape,    setTape]    = useState([])
   const [current, setCurrent] = useState('')
   const [totAnim, setTotAnim] = useState(false)
@@ -987,7 +988,7 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', marginBottom: 4, background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)', animation: 'calcTapeIn 0.2s ease' }}>
               <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Item {i + 1}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 16, color: 'var(--text-primary)' }}>{formatCurrency(n)}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 16, color: 'var(--text-primary)' }}>{formatCurrency(n, isIncognito)}</span>
                 <button onClick={() => setTape(p => p.filter((_, j) => j !== i))} style={{ fontSize: 14, color: 'var(--danger)', padding: '0 2px' }}>✕</button>
               </div>
             </div>
@@ -995,7 +996,7 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
         </div>
         <div style={{ margin: '6px 20px', padding: '10px 14px', background: total > 0 ? 'var(--accent-dim)' : 'var(--bg-elevated)', borderRadius: 14, border: '1px solid ' + (total > 0 ? 'var(--border-strong)' : 'var(--border)'), display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 500 }}>{tape.length > 0 ? `${tape.length} item${tape.length > 1 ? 's' : ''}` : 'Total'}</span>
-          <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22, color: total > 0 ? 'var(--accent)' : 'var(--text-tertiary)', letterSpacing: '-0.02em', animation: totAnim ? 'totalPop 0.35s ease' : 'none' }}>{total > 0 ? formatCurrency(total) : '₹0'}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22, color: total > 0 ? 'var(--accent)' : 'var(--text-tertiary)', letterSpacing: '-0.02em', animation: totAnim ? 'totalPop 0.35s ease' : 'none' }}>{total > 0 ? formatCurrency(total, isIncognito) : '₹0'}</span>
         </div>
         <div style={{ margin: '0 20px 8px', padding: '10px 14px', background: 'var(--bg-elevated)', borderRadius: 14, border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Add item</span>
@@ -1182,6 +1183,7 @@ export default function App() {
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [customRange,    setCustomRange]    = useState({ from: today(), to: today() })
   const [avatarId,       setAvatarId]       = useState(null)
+  const [isIncognito,    setIsIncognito]    = useState(false)
   const [showSheet,      setShowSheet]      = useState(false)
   const [showSignIn,     setShowSignIn]     = useState(false)
   const [showExport,     setShowExport]     = useState(false)
@@ -1335,6 +1337,14 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>SpentIt</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setIsIncognito(!isIncognito)} style={{
+              width: 34, height: 34, borderRadius: '50%', background: isIncognito ? 'var(--accent)' : 'var(--bg-elevated)',
+              color: isIncognito ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-strong)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+              transition: 'all 0.2s ease',
+            }}>
+              {isIncognito ? '🕶️' : '👁️'}
+            </button>
             {filtered.length > 0 && (
               <button onClick={() => { track('export_tapped', { expense_count: filtered.length, filter: activeFilter }, user?.id || null); setShowExport(true) }} style={{ padding: '6px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--bg-elevated)', color: 'var(--accent)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <span>📤</span> Export
@@ -1352,12 +1362,12 @@ export default function App() {
         <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Track your spends easy! 💸</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
           <StreakBadge expenses={expenses} />
-          <RankBadge   expenses={filtered} />
+          <RankBadge   expenses={filtered} isIncognito={isIncognito} />
           <button onClick={() => setShowCalc(true)} style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 16, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🧮</button>
         </div>
       </div>
 
-      <SummaryCard expenses={filtered} filter={activeFilter} />
+      <SummaryCard expenses={filtered} filter={activeFilter} isIncognito={isIncognito} />
       <FilterBar   activeFilter={activeFilter} onFilterChange={setActiveFilter} customRange={customRange} onCustomRangeChange={setCustomRange} />
       <TypeFilterBar active={activeTypeFilter} onChange={setActiveTypeFilter} />
       <WeatherBar />
@@ -1370,10 +1380,10 @@ export default function App() {
             <div key={date} style={{ marginBottom: 18, animation: 'fadeIn 0.3s ease' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{formatDisplayDate(date)}</p>
-                <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{formatCurrency(grouped[date].reduce((s, e) => s + e.amount, 0))}</p>
+                <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{formatCurrency(grouped[date].reduce((s, e) => s + e.amount, 0), isIncognito)}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {grouped[date].map(exp => <ExpenseRow key={exp.id} expense={exp} onDelete={deleteExpense} onEdit={handleEdit} />)}
+                {grouped[date].map(exp => <ExpenseRow key={exp.id} expense={exp} onDelete={deleteExpense} onEdit={handleEdit} isIncognito={isIncognito} />)}
               </div>
             </div>
           ))}
@@ -1409,7 +1419,7 @@ export default function App() {
 
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
-      {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
+      {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} isIncognito={isIncognito} />}
       {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} showToast={showToast} />}
     </div>
   )
