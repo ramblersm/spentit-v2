@@ -7,14 +7,14 @@ import { track } from './analytics'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const AVATARS = [
-  { id: 'av1', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
-  { id: 'av2', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Aneka' },
-  { id: 'av3', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Buddy' },
-  { id: 'av4', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Cookie' },
-  { id: 'av5', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Daisy' },
-  { id: 'av6', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Emma' },
-  { id: 'av7', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Fiona' },
-  { id: 'av8', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=George' },
+  { id: 'av1', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Felix' },
+  { id: 'av2', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Aneka' },
+  { id: 'av3', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Buddy' },
+  { id: 'av4', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Cookie' },
+  { id: 'av5', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Daisy' },
+  { id: 'av6', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Emma' },
+  { id: 'av7', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Fiona' },
+  { id: 'av8', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=George' },
 ]
 
 const CATEGORIES = [
