@@ -15,6 +15,8 @@ const AVATARS = [
   { id: 'av6', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Emma' },
   { id: 'av7', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Fiona' },
   { id: 'av8', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=George' },
+  { id: 'av9', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Milo' },
+  { id: 'av10', url: 'https://api.dicebear.com/7.x/big-smile/svg?seed=Sophie' },
 ]
 
 const CATEGORIES = [
