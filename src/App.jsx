@@ -6,6 +6,17 @@ import { track } from './analytics'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+const AVATARS = [
+  { id: 'av1', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
+  { id: 'av2', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Aneka' },
+  { id: 'av3', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Buddy' },
+  { id: 'av4', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Cookie' },
+  { id: 'av5', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Daisy' },
+  { id: 'av6', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Emma' },
+  { id: 'av7', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Fiona' },
+  { id: 'av8', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=George' },
+]
+
 const CATEGORIES = [
   { id: 'food',          emoji: '🍔', label: 'Food',          color: '#e8622a' },
   { id: 'transport',     emoji: '🚗', label: 'Transport',     color: '#4361d8' },
@@ -1014,7 +1025,7 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
 
 // ─── Sign-In Sheet ────────────────────────────────────────────────────────────
 
-function SignInSheet({ onClose, onResync }) {
+function SignInSheet({ onClose, onResync, avatarId, setAvatarId }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
@@ -1058,7 +1069,24 @@ function SignInSheet({ onClose, onResync }) {
 
           {user ? (
             <>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>{user.email}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 16 }}>{user.email}</p>
+              
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Choose Avatar</p>
+                <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10 }}>
+                  {AVATARS.map(av => (
+                    <button key={av.id} onClick={() => setAvatarId(av.id)} style={{
+                      flexShrink: 0, width: 48, height: 48, borderRadius: '50%',
+                      background: 'var(--bg-elevated)', border: avatarId === av.id ? '2px solid var(--accent)' : '1px solid var(--border-strong)',
+                      padding: 2, cursor: 'pointer', transition: 'all 0.2s ease',
+                      boxShadow: avatarId === av.id ? '0 0 8px var(--accent-glow)' : 'none',
+                    }}>
+                      <img src={av.url} alt={av.id} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={() => { onResync(); onClose() }}
                 style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--accent)', fontSize: 14, fontWeight: 600, border: '1px solid var(--border-strong)', cursor: 'pointer', marginBottom: 10 }}
@@ -1129,12 +1157,13 @@ function SignInSheet({ onClose, onResync }) {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
-async function upsertUser(user) {
+async function upsertUser(user, avatarId = null) {
   if (!supabase) return
   await supabase.from('users').upsert({
     id: user.id,
     email: user.email,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ...(avatarId ? { avatar_id: avatarId } : {}),
   }, { onConflict: 'id' })
 }
 
@@ -1144,6 +1173,7 @@ export default function App() {
   const [activeFilter,   setActiveFilter]   = useState('today')
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [customRange,    setCustomRange]    = useState({ from: today(), to: today() })
+  const [avatarId,       setAvatarId]       = useState(null)
   const [showSheet,      setShowSheet]      = useState(false)
   const [showSignIn,     setShowSignIn]     = useState(false)
   const [showExport,     setShowExport]     = useState(false)
@@ -1174,7 +1204,13 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => { if (user) { upsertUser(user); track('login_completed', {}, user.id) } }, [user])
+  useEffect(() => { if (user) { upsertUser(user, avatarId); track('login_completed', {}, user.id) } }, [user, avatarId])
+
+  useEffect(() => {
+    if (!user || !supabase) return
+    supabase.from('users').select('avatar_id').eq('id', user.id).single()
+      .then(({ data }) => { if (data?.avatar_id) setAvatarId(data.avatar_id) })
+  }, [user])
 
   useEffect(() => {
     track('app_opened', {
@@ -1287,8 +1323,12 @@ export default function App() {
                 <span>📤</span> Export
               </button>
             )}
-            <button onClick={() => setShowSignIn(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-              {user ? user.email[0].toUpperCase() : '👤'}
+            <button onClick={() => setShowSignIn(true)} style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, overflow: 'hidden' }}>
+              {user ? (
+                avatarId ? (
+                  <img src={AVATARS.find(a => a.id === avatarId)?.url} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                ) : user.email[0].toUpperCase()
+              ) : '👤'}
               {user && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 8, height: 8, borderRadius: '50%', background: '#1a7a4a', border: '1.5px solid var(--bg-elevated)' }} />}
             </button>
           </div>
@@ -1352,7 +1392,7 @@ export default function App() {
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
-      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} />}
     </div>
   )
 }
