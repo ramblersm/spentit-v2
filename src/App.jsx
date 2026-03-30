@@ -87,6 +87,10 @@ function formatExportDate(dateStr) {
     .toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+}
+
 function CountUp({ end, duration = 300, isIncognito = false }) {
   const [count, setCount] = useState(0)
   useEffect(() => {
