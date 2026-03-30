@@ -87,8 +87,20 @@ function formatExportDate(dateStr) {
     .toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function formatTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+function CountUp({ end, duration = 300, isIncognito = false }) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    let startTime = null
+    const startValue = count
+    const step = timestamp => {
+      if (!startTime) startTime = timestamp
+      const progress = Math.min((timestamp - startTime) / duration, 1)
+      setCount(Math.floor(progress * (end - startValue) + startValue))
+      if (progress < 1) window.requestAnimationFrame(step)
+    }
+    window.requestAnimationFrame(step)
+  }, [end, duration])
+  return <span>{formatCurrency(count, isIncognito)}</span>
 }
 
 function getFilterRange(filterId, customRange) {
@@ -335,7 +347,7 @@ function RankBadge({ expenses, isIncognito }) {
             <div style={{ padding: '4px 20px 20px' }}>
               <p style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Your Saver Rank</p>
               <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 16 }}>
-                Based on daily avg spend · currently <strong style={{ color: rank.color }}>{formatCurrency(Math.round(avg), isIncognito)}/day</strong>
+                Based on daily avg spend · currently <strong style={{ color: rank.color }}><CountUp end={Math.round(avg)} isIncognito={isIncognito} />/day</strong>
               </p>
               {RANKS.map(r => (
                 <div key={r.label} style={{
@@ -450,7 +462,7 @@ function SummaryCard({ expenses, filter, isIncognito }) {
         <div>
           <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</p>
           <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 38, lineHeight: 1, color: total > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)', letterSpacing: '-0.02em' }}>
-            {total > 0 ? formatCurrency(total, isIncognito) : 'nothing yet'}
+            {total > 0 ? <CountUp end={total} isIncognito={isIncognito} /> : 'nothing yet'}
           </p>
         </div>
         {topCat && (
@@ -480,7 +492,7 @@ function SummaryCard({ expenses, filter, isIncognito }) {
                 </div>
               </div>
               {[
-                ['Total spent',  formatCurrency(topAmt, isIncognito)],
+                ['Total spent',  <CountUp end={topAmt} isIncognito={isIncognito} />],
                 ['% of overall', `${topPct}%`],
                 ['Transactions', `${topCount} ${topCount === 1 ? 'entry' : 'entries'}`],
               ].map(([k, v]) => (
@@ -597,7 +609,7 @@ function WeatherBar() {
 
 // ─── Expense Row + Detail Sheet ───────────────────────────────────────────────
 
-function ExpenseRow({ expense, onDelete, onEdit, isIncognito }) {
+function ExpenseRow({ expense, onDelete, onEdit, isIncognito, index = 0 }) {
   const cat = getCat(expense.category)
   const [showDetail, setShowDetail] = useState(false)
   const [swiped,     setSwiped]     = useState(false)
@@ -620,6 +632,8 @@ function ExpenseRow({ expense, onDelete, onEdit, isIncognito }) {
       <div style={{
         position: 'relative', overflow: 'hidden',
         animation: deleting ? 'rowDelete 0.38s ease forwards' : 'popIn 0.28s cubic-bezier(0.34,1.56,0.64,1)',
+        animationDelay: deleting ? '0s' : `${index * 0.04}s`,
+        animationFillMode: 'both',
       }}>
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-md)' }}>
           <span style={{ fontSize: 18 }}>🗑️</span>
@@ -1383,7 +1397,9 @@ export default function App() {
                 <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{formatCurrency(grouped[date].reduce((s, e) => s + e.amount, 0), isIncognito)}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {grouped[date].map(exp => <ExpenseRow key={exp.id} expense={exp} onDelete={deleteExpense} onEdit={handleEdit} isIncognito={isIncognito} />)}
+                {grouped[date].map((exp, idx) => (
+                  <ExpenseRow key={exp.id} expense={exp} onDelete={deleteExpense} onEdit={handleEdit} isIncognito={isIncognito} index={idx} />
+                ))}
               </div>
             </div>
           ))}
@@ -1414,8 +1430,8 @@ export default function App() {
       )}
 
       {/* FAB */}
-      <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.90)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-        style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.12s ease' }}>+</button>
+      <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.88)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+        style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>+</button>
 
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
