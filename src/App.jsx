@@ -861,7 +861,10 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
         ) : (
           <div style={{ padding: '0 24px', overflowY: 'auto', maxHeight: '78vh' }}>
             <div style={{ textAlign: 'center', marginBottom: 18 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 34, color: 'var(--accent)', letterSpacing: '-0.02em' }}>₹{amount}</span>
+              <button onClick={() => setStep('amount')} style={{ background: 'var(--bg-elevated)', border: '1.5px dashed var(--accent)', borderRadius: 14, padding: '6px 20px', cursor: 'pointer', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 34, color: 'var(--accent)', letterSpacing: '-0.02em' }}>₹{amount}</span>
+                <span style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>tap to edit</span>
+              </button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               {[['personal','👤 Personal'],['shared','👥 Shared']].map(([val,label]) => (
