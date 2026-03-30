@@ -39,10 +39,10 @@ const FILTERS = [
 
 const RANKS = [
   { label: '🧘 Monk',     min: 0,    max: 0,        bg: '#e0f2f1', color: '#00695c', desc: 'Zero spend today. Absolute discipline.' },
-  { label: '🌱 Frugal',   min: 0.01, max: 500,      bg: '#e8f5e9', color: '#2e7d32', desc: 'Daily avg under ₹500. Spending wisely.' },
-  { label: '⚡ Balanced', min: 500,  max: 1500,     bg: '#e3f2fd', color: '#1565c0', desc: 'Daily avg ₹500–1500. Healthy balance.' },
-  { label: '🔥 Spender',  min: 1500, max: 3000,     bg: '#fff3e0', color: '#e65100', desc: 'Daily avg ₹1500–3000. Watch the burn rate.' },
-  { label: '💸 Splurger', min: 3000, max: Infinity, bg: '#fce4ec', color: '#880e4f', desc: 'Daily avg over ₹3000. Living large!' },
+  { label: '🌱 Frugal',   min: 0.01, max: 750,      bg: '#e8f5e9', color: '#2e7d32', desc: 'Daily avg under ₹750. Spending wisely.' },
+  { label: '⚡ Balanced', min: 750,  max: 1500,     bg: '#e3f2fd', color: '#1565c0', desc: 'Daily avg ₹750–1500. Healthy balance.' },
+  { label: '🔥 Spender',  min: 1500, max: 4000,     bg: '#fff3e0', color: '#e65100', desc: 'Daily avg ₹1500–4000. Watch the burn rate.' },
+  { label: '💸 Splurger', min: 4000, max: Infinity, bg: '#fce4ec', color: '#880e4f', desc: 'Daily avg over ₹4000. Living large!' },
 ]
 
 const WEATHER_HINTS = {
