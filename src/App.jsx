@@ -328,7 +328,12 @@ function RankBadge({ expenses }) {
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 14px', borderRadius: 14, marginBottom: 8,
                   background: r.label === rank.label ? r.bg : 'var(--bg-elevated)',
-                  border: `1.5px solid ${r.label === rank.label ? r.color + '55' : 'var(--border)'}`,
+                  border: `1.5px solid ${r.label === rank.label ? r.color + '88' : 'var(--border)'}`,
+                  ...(r.label === rank.label ? {
+                    '--glow-color': r.color + '55',
+                    '--glow-color-soft': r.color + '22',
+                    animation: 'rankBorderGlow 2.4s ease-in-out infinite',
+                  } : {}),
                 }}>
                   <span style={{ fontSize: 22, minWidth: 30 }}>{r.label.split(' ')[0]}</span>
                   <div>

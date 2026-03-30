@@ -105,6 +105,11 @@ input, textarea { font-family: var(--font-body); }
   40%  { transform: scale(1.22); }
   100% { transform: scale(1); }
 }
+@keyframes rankBorderGlow {
+  0%   { box-shadow: 0 0 0 0px var(--glow-color, rgba(0,0,0,0.15)), inset 0 0 0 0 var(--glow-color, rgba(0,0,0,0)); }
+  40%  { box-shadow: 0 0 12px 3px var(--glow-color, rgba(0,0,0,0.2)), inset 0 0 6px 0 var(--glow-color-soft, rgba(0,0,0,0.06)); }
+  100% { box-shadow: 0 0 0 0px var(--glow-color, rgba(0,0,0,0.15)), inset 0 0 0 0 var(--glow-color, rgba(0,0,0,0)); }
+}
 @keyframes spinnerRotate {
   to { transform: rotate(360deg); }
 }
