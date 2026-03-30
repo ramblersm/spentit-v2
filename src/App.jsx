@@ -1027,13 +1027,19 @@ function CalcSheet({ onClose, onSaveAsExpense }) {
 
 // ─── Sign-In Sheet ────────────────────────────────────────────────────────────
 
-function SignInSheet({ onClose, onResync, avatarId, setAvatarId }) {
+function SignInSheet({ onClose, onResync, avatarId, setAvatarId, showToast }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
   const [sent,    setSent]    = useState(false)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
+
+  function handleAvatarSelect(id) {
+    setAvatarId(id)
+    showToast('✨ Avatar updated successfully!')
+    onClose()
+  }
 
   async function handleSend() {
     if (!email.trim()) return
@@ -1077,7 +1083,7 @@ function SignInSheet({ onClose, onResync, avatarId, setAvatarId }) {
                 <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Choose Avatar</p>
                 <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10 }}>
                   {AVATARS.map(av => (
-                    <button key={av.id} onClick={() => setAvatarId(av.id)} style={{
+                    <button key={av.id} onClick={() => handleAvatarSelect(av.id)} style={{
                       flexShrink: 0, width: 48, height: 48, borderRadius: '50%',
                       background: 'var(--bg-elevated)', border: avatarId === av.id ? '2px solid var(--accent)' : '1px solid var(--border-strong)',
                       padding: 2, cursor: 'pointer', transition: 'all 0.2s ease',
@@ -1251,6 +1257,15 @@ export default function App() {
 
   useEffect(() => { saveExp(expenses) }, [expenses])
 
+  function showToast(message) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    setUndoToast({ message, fading: false })
+    undoTimerRef.current = setTimeout(() => {
+      setUndoToast(t => t ? { ...t, fading: true } : null)
+      setTimeout(() => setUndoToast(null), 400)
+    }, 3000)
+  }
+
   function showUndo(message, snapshot) {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
     setUndoToast({ message, snapshot, fading: false })
@@ -1331,7 +1346,6 @@ export default function App() {
                   <img src={AVATARS.find(a => a.id === avatarId)?.url} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
                 ) : user.email[0].toUpperCase()
               ) : '👤'}
-              {user && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 8, height: 8, borderRadius: '50%', background: '#1a7a4a', border: '1.5px solid var(--bg-elevated)' }} />}
             </button>
           </div>
         </div>
@@ -1376,10 +1390,12 @@ export default function App() {
           animation: undoToast.fading ? 'toastFadeOut 0.4s ease forwards' : 'toastSlideUp 0.3s cubic-bezier(0.32,0.72,0,1)',
         }}>
           <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{undoToast.message}</span>
-          <button onClick={() => { setExpenses(undoToast.snapshot); clearTimeout(undoTimerRef.current); setUndoToast(null) }}
-            style={{ padding: '5px 12px', borderRadius: 20, background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            Undo
-          </button>
+          {undoToast.snapshot && (
+            <button onClick={() => { setExpenses(undoToast.snapshot); clearTimeout(undoTimerRef.current); setUndoToast(null) }}
+              style={{ padding: '5px 12px', borderRadius: 20, background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+              Undo
+            </button>
+          )}
           <button onClick={() => { clearTimeout(undoTimerRef.current); setUndoToast(null) }}
             style={{ padding: '4px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, border: 'none', cursor: 'pointer' }}>
             ✕
@@ -1394,7 +1410,7 @@ export default function App() {
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} />}
-      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} showToast={showToast} />}
     </div>
   )
 }
