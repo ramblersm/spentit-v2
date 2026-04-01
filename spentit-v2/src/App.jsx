@@ -1563,6 +1563,7 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
           <StreakBadge expenses={expenses} />
           <RankBadge   expenses={filtered} isIncognito={isIncognito} />
+          <button onClick={() => setShowBudgetSheet(true)} style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 16, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎯</button>
           <button onClick={() => setShowCalc(true)} style={{ width: 34, height: 34, borderRadius: '50%', fontSize: 16, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🧮</button>
         </div>
       </div>
