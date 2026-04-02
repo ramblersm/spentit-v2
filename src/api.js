@@ -42,3 +42,19 @@ export async function deleteExpense(id) {
   })
   if (!res.ok) throw new Error('Failed to delete expense')
 }
+
+export async function fetchUserSettings() {
+  const res = await fetch('/api/user-settings', { headers: await authHeaders() })
+  if (!res.ok) throw new Error('Failed to fetch user settings')
+  return res.json()
+}
+
+export async function updateUserSettings(settings) {
+  const res = await fetch('/api/user-settings', {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify(settings),
+  })
+  if (!res.ok) throw new Error('Failed to update user settings')
+  return res.json()
+}
