@@ -6,7 +6,7 @@ import SheetHandle from './SheetHandle'
 import RankBadge from './RankBadge'
 import StreakBadge from './StreakBadge'
 
-export default function SignInSheet({ onClose, onResync, avatarId, setAvatarId, showToast, expenses = [], isIncognito = false }) {
+export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast, expenses = [], isIncognito = false }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
@@ -80,10 +80,6 @@ export default function SignInSheet({ onClose, onResync, avatarId, setAvatarId, 
                 </div>
               </div>
 
-              <button
-                onClick={() => { onResync(); onClose() }}
-                style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--accent)', fontSize: 14, fontWeight: 600, border: '1px solid var(--border-strong)', cursor: 'pointer', marginBottom: 10 }}
-              >Re-sync local data to cloud</button>
               <button
                 onClick={() => { signOut(); onClose() }}
                 style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--danger-dim)', color: 'var(--danger)', fontSize: 14, fontWeight: 600, border: '1px solid var(--danger-dim)', cursor: 'pointer' }}
