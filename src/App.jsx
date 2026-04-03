@@ -958,10 +958,11 @@ function getPastNotes(expenses) {
     .map(([note]) => note)
 }
 
-function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmount = null, expenses = [] }) {
+function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmount = null, expenses = [], defaultType = 'all' }) {
   const isEdit = !!editExpense
-  const [step,     setStep]     = useState(isEdit || seedAmount ? 'details' : 'type')
-  const [type,     setType]     = useState(isEdit ? (editExpense.type || 'personal') : (localStorage.getItem('spentit_last_type') || 'personal'))
+  const validDefault = (defaultType === 'personal' || defaultType === 'shared') ? defaultType : null
+  const [step,     setStep]     = useState(isEdit || seedAmount || validDefault ? 'details' : 'type')
+  const [type,     setType]     = useState(isEdit ? (editExpense.type || 'personal') : (validDefault || localStorage.getItem('spentit_last_type') || 'personal'))
   const [amount,   setAmount]   = useState(isEdit ? String(editExpense.amount) : seedAmount ? String(seedAmount) : '')
   const [category, setCategory] = useState(isEdit ? editExpense.category : 'food')
   const [note,     setNote]     = useState(isEdit ? editExpense.note : '')
@@ -970,6 +971,14 @@ function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense = null, seedAmo
   const [showDate, setShowDate] = useState(false)
   const [ghost,    setGhost]    = useState('')
   const pastNotes = useMemo(() => getPastNotes(expenses), [expenses])
+
+  // If we have a defaultType or seedAmount, we should actually go to 'amount' step first, unless it's an edit
+  // Correction: if seedAmount is present, we go to 'details'. If only defaultType is present, we should go to 'amount'
+  useEffect(() => {
+    if (!isEdit && !seedAmount && validDefault) {
+      setStep('amount')
+    }
+  }, [])
 
   function handleNoteChange(e) {
     const val = e.target.value
@@ -1620,7 +1629,7 @@ export default function App() {
       <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.88)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
         style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>+</button>
 
-      {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} />}
+      {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} defaultType={activeTypeFilter} />}
       {showBudgetSheet && <BudgetSummarySheet expenses={expenses} budget={overallBudget} onUpdateBudget={handleUpdateBudget} onClose={() => setShowBudgetSheet(false)} isIncognito={isIncognito} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} isIncognito={isIncognito} />}
