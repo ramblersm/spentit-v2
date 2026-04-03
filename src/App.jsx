@@ -22,7 +22,7 @@ const AVATARS = [
 const CATEGORIES = [
   { id: 'food',          emoji: '🍔', label: 'Food',          color: '#e8622a' },
   { id: 'transport',     emoji: '🚗', label: 'Transport',     color: '#4361d8' },
-  { id: 'shopping',      emoji: '🛒', label: 'Shopping',      color: '#9333ea' },
+  { id: 'shopping',      emoji: '🛒', label: 'Groceries',     color: '#9333ea' },
   { id: 'health',        emoji: '🏥', label: 'Health',        color: '#e24b4a' },
   { id: 'entertainment', emoji: '🎬', label: 'Fun',           color: '#d97706' },
   { id: 'bills',         emoji: '💡', label: 'Bills',         color: '#0891b2' },
