@@ -3,8 +3,10 @@ import { useAuth } from '../useAuth'
 import { AVATARS } from '../constants'
 import { sheetBackdrop, sheetBase } from './sharedStyles'
 import SheetHandle from './SheetHandle'
+import RankBadge from './RankBadge'
+import StreakBadge from './StreakBadge'
 
-export default function SignInSheet({ onClose, onResync, avatarId, setAvatarId, showToast }) {
+export default function SignInSheet({ onClose, onResync, avatarId, setAvatarId, showToast, expenses = [], isIncognito = false }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
@@ -48,9 +50,15 @@ export default function SignInSheet({ onClose, onResync, avatarId, setAvatarId, 
       <div style={{ ...sheetBase, paddingBottom: 'calc(32px + var(--safe-bottom))' }}>
         <SheetHandle />
         <div style={{ padding: '4px 20px 0' }}>
-          <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-            {user ? 'Your account' : 'Sign in'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {user ? 'Your account' : 'Sign in'}
+            </p>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <RankBadge expenses={expenses} isIncognito={isIncognito} />
+              <StreakBadge expenses={expenses} />
+            </div>
+          </div>
 
           {user ? (
             <>

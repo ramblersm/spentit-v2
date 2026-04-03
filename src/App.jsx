@@ -254,10 +254,6 @@ export default function App() {
       <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 24, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>SpentIt</h1>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <RankBadge expenses={expenses} isIncognito={isIncognito} />
-            <StreakBadge expenses={expenses} />
-          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button onClick={() => setIsIncognito(!isIncognito)} style={{ width: 38, height: 38, borderRadius: 12, background: isIncognito ? 'var(--accent)' : 'var(--bg-elevated)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', transition: 'all 0.2s ease' }}>
@@ -335,7 +331,8 @@ export default function App() {
       {showBudgetSheet && <BudgetSummarySheet expenses={expenses} budget={overallBudget} onUpdateBudget={handleUpdateBudget} onClose={() => setShowBudgetSheet(false)} isIncognito={isIncognito} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} isIncognito={isIncognito} />}
-      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} showToast={showToast} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} onResync={() => { localStorage.removeItem(MIGRATED_KEY) }} avatarId={avatarId} setAvatarId={setAvatarId} showToast={showToast} expenses={expenses} isIncognito={isIncognito} />}
+
     </div>
   )
 }
