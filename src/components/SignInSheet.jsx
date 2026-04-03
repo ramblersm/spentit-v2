@@ -5,6 +5,7 @@ import { sheetBackdrop, sheetBase } from './sharedStyles'
 import SheetHandle from './SheetHandle'
 import RankBadge from './RankBadge'
 import StreakBadge from './StreakBadge'
+import TrendsView from './TrendsView'
 
 export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast, expenses = [], isIncognito = false }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
@@ -13,6 +14,7 @@ export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast,
   const [sent,    setSent]    = useState(false)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
+  const [showTrends, setShowTrends] = useState(false)
 
   function handleAvatarSelect(id) {
     setAvatarId(id)
@@ -47,7 +49,7 @@ export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast,
   return (
     <>
       <div onClick={onClose} style={sheetBackdrop} />
-      <div style={{ ...sheetBase, paddingBottom: 'calc(32px + var(--safe-bottom))' }}>
+      <div style={{ ...sheetBase, paddingBottom: 'calc(32px + var(--safe-bottom))', maxHeight: '92vh', overflowY: 'auto' }}>
         <SheetHandle />
         <div style={{ padding: '4px 20px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -80,10 +82,21 @@ export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast,
                 </div>
               </div>
 
-              <button
-                onClick={() => { signOut(); onClose() }}
-                style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--danger-dim)', color: 'var(--danger)', fontSize: 14, fontWeight: 600, border: '1px solid var(--danger-dim)', cursor: 'pointer' }}
-              >Sign out</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  onClick={() => setShowTrends(!showTrends)}
+                  style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', color: 'var(--accent)', fontSize: 14, fontWeight: 600, border: '1px solid var(--border-strong)', cursor: 'pointer' }}
+                >
+                  {showTrends ? '📊 Hide Spending Trends' : '📊 View Spending Trends'}
+                </button>
+
+                {showTrends && <TrendsView expenses={expenses} isIncognito={isIncognito} />}
+
+                <button
+                  onClick={() => { signOut(); onClose() }}
+                  style={{ width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', background: 'var(--danger-dim)', color: 'var(--danger)', fontSize: 14, fontWeight: 600, border: '1px solid var(--danger-dim)', cursor: 'pointer' }}
+                >Sign out</button>
+              </div>
             </>
           ) : sent ? (
             <>
