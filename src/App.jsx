@@ -378,7 +378,7 @@ export default function App() {
         <>
           <div onClick={() => setShowQuickAdd(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(2px)', zIndex: 35 }} />
           <div style={{ position: 'fixed', bottom: 'calc(100px + var(--safe-bottom))', right: 24, display: 'flex', flexDirection: 'column', gap: 12, zIndex: 40 }}>
-            {[500, 200, 100, 50].map((amt, i) => (
+            {[1000, 700, 500, 300].map((amt, i) => (
               <button key={amt} onClick={() => handleQuickAdd(amt)} style={{
                 width: 58, height: 58, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1.5px solid var(--border-strong)',
                 color: 'var(--accent)', fontSize: 16, fontWeight: 700, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
