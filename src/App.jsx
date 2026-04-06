@@ -107,22 +107,30 @@ export default function App() {
     }
   }, [user])
 
-  useEffect(() => { if (user) { upsertUser(user, avatarId); track('login_completed', {}, user.id) } }, [user, avatarId])
-
-  useEffect(() => {
-    if (!user || !supabase) return
-    supabase.from('users').select('avatar_id').eq('id', user.id).single()
-      .then(({ data }) => { if (data?.avatar_id) setAvatarId(data.avatar_id) })
+  useEffect(() => { 
+    if (user) { 
+      // Initial upsert on login to ensure user exists
+      upsertUser(user); 
+      track('login_completed', {}, user.id) 
+    } 
   }, [user])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !supabase) return
     api.fetchUserSettings()
       .then(data => {
+        if (data.avatar_id) setAvatarId(data.avatar_id)
         if (data.monthly_budget) setOverallBudget(data.monthly_budget)
       })
       .catch(() => {})
   }, [user])
+
+  function handleAvatarSelect(id) {
+    setAvatarId(id)
+    if (user) {
+      api.updateUserSettings({ avatar_id: id }).catch(() => {})
+    }
+  }
 
   useEffect(() => {
     track('app_opened', {
