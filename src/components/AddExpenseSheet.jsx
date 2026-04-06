@@ -79,12 +79,21 @@ export default function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense 
     onClose()
   }
 
-  const keys = ['1','2','3','4','5','6','7','8','9','.','0','del']
+  const drag = useDragToClose(useState, useRef, onClose)
 
   return (
     <>
       <div onClick={onClose} style={sheetBackdrop} />
-      <div style={{ ...sheetBase, paddingBottom: 'calc(24px + var(--safe-bottom))', maxHeight: '92vh', overflow: 'hidden' }}>
+      <div 
+        {...drag.props}
+        style={{ 
+          ...sheetBase, 
+          ...drag.style,
+          paddingBottom: 'calc(24px + var(--safe-bottom))', 
+          maxHeight: '92vh', 
+          overflow: 'hidden' 
+        }}
+      >
         <SheetHandle />
         {step === 'type' ? (
           <div style={{ padding: '12px 20px 28px' }}>

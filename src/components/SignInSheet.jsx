@@ -50,7 +50,16 @@ export default function SignInSheet({ onClose, avatarId, onAvatarSelect, showToa
   return (
     <>
       <div onClick={onClose} style={sheetBackdrop} />
-      <div style={{ ...sheetBase, paddingBottom: 'calc(32px + var(--safe-bottom))', maxHeight: '92vh', overflowY: 'auto' }}>
+      <div 
+        {...drag.props}
+        style={{ 
+          ...sheetBase, 
+          ...drag.style,
+          paddingBottom: 'calc(32px + var(--safe-bottom))', 
+          maxHeight: '92vh', 
+          overflowY: 'auto' 
+        }}
+      >
         <SheetHandle />
         <div style={{ padding: '4px 20px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>

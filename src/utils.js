@@ -144,3 +144,36 @@ export function playChime() {
   } catch (_) {}
 }
 
+export function useDragToClose(useState, useRef, onClose, threshold = 80) {
+  const [offset, setOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const startY = useRef(0)
+
+  const onTouchStart = (e) => {
+    startY.current = e.touches[0].clientY
+    setIsDragging(true)
+  }
+
+  const onTouchMove = (e) => {
+    const delta = e.touches[0].clientY - startY.current
+    if (delta > 0) setOffset(delta)
+  }
+
+  const onTouchEnd = () => {
+    if (offset > threshold) {
+      onClose()
+      setTimeout(() => { setOffset(0); setIsDragging(false) }, 300)
+    } else {
+      setOffset(0); setIsDragging(false)
+    }
+  }
+
+  return {
+    style: {
+      transform: `translateY(${offset}px)`,
+      transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.32,0.72,0,1)',
+    },
+    props: { onTouchStart, onTouchMove, onTouchEnd }
+  }
+}
+

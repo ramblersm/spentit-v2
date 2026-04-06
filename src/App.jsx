@@ -119,7 +119,10 @@ export default function App() {
     if (!user || !supabase) return
     api.fetchUserSettings()
       .then(data => {
-        if (data.avatar_id) setAvatarId(data.avatar_id)
+        if (data.avatar_id) {
+          setAvatarId(data.avatar_id)
+          localStorage.setItem('spentit_avatar_id', data.avatar_id)
+        }
         if (data.monthly_budget) setOverallBudget(data.monthly_budget)
       })
       .catch(() => {})
