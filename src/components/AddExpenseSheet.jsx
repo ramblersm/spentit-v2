@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { CATEGORIES } from '../constants'
 import { today, formatDisplayDate, genId, getCat, formatCurrency } from '../utils'
 import { sheetBackdrop, sheetBase, dateInputStyle } from './sharedStyles'
@@ -26,6 +26,7 @@ export default function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense 
   const [showDate, setShowDate] = useState(false)
   const [ghost,    setGhost]    = useState('')
   const pastNotes = useMemo(() => getPastNotes(expenses), [expenses])
+  const noteRef = useRef(null)
 
   // If we have a defaultType or seedAmount, we should actually go to 'amount' step first, unless it's an edit
   useEffect(() => {
@@ -33,6 +34,12 @@ export default function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense 
       setStep('amount')
     }
   }, [isEdit, seedAmount, validDefault])
+
+  useEffect(() => {
+    if (showNote) {
+      setTimeout(() => noteRef.current?.focus(), 150)
+    }
+  }, [showNote])
 
   function handleNoteChange(e) {
     const val = e.target.value
@@ -152,24 +159,24 @@ export default function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense 
             </button>
             {showNote && (
               <div style={{ position: 'relative', marginBottom: 8, animation: 'fadeSlideIn 0.2s ease' }}>
-                {ghost && (
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '12px 44px 12px 14px', fontSize: 15, color: 'var(--text-tertiary)', pointerEvents: 'none', whiteSpace: 'nowrap', overflow: 'hidden', borderRadius: 12, display: 'flex', alignItems: 'center' }}>
-                    <span style={{ visibility: 'hidden' }}>{note}</span>
-                    <span>{ghost}</span>
-                  </div>
-                )}
                 <input
-                  autoFocus
+                  ref={noteRef}
                   value={note}
                   onChange={handleNoteChange}
                   onKeyDown={handleNoteKeyDown}
                   onBlur={() => setGhost('')}
                   placeholder={ghost ? '' : 'e.g. Lunch at Rajdhani'}
                   maxLength={60}
-                  style={{ width: '100%', padding: '12px 44px 12px 14px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--accent)', color: 'var(--text-primary)', fontSize: 15, outline: 'none', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '12px 44px 12px 14px', borderRadius: 12, background: 'var(--bg-elevated)', border: '1px solid var(--accent)', color: 'var(--text-primary)', fontSize: 16, outline: 'none', position: 'relative', zIndex: 1, boxSizing: 'border-box' }}
                 />
                 {ghost && (
-                  <button onClick={acceptGhost} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', zIndex: 2, width: 28, height: 28, borderRadius: 8, background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</button>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '12px 44px 12px 14px', fontSize: 16, color: 'var(--text-tertiary)', pointerEvents: 'none', whiteSpace: 'nowrap', overflow: 'hidden', borderRadius: 12, display: 'flex', alignItems: 'center', zIndex: 2 }}>
+                    <span style={{ visibility: 'hidden' }}>{note}</span>
+                    <span>{ghost}</span>
+                  </div>
+                )}
+                {ghost && (
+                  <button onClick={acceptGhost} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', zIndex: 3, width: 28, height: 28, borderRadius: 8, background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</button>
                 )}
               </div>
             )}

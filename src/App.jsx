@@ -337,7 +337,7 @@ export default function App() {
       {showBudgetSheet && <BudgetSummarySheet expenses={expenses} budget={overallBudget} onUpdateBudget={handleUpdateBudget} onClose={() => setShowBudgetSheet(false)} isIncognito={isIncognito} />}
       {showExport  && <ExportSheet     expenses={filtered} onClose={() => setShowExport(false)} />}
       {showCalc    && <CalcSheet       onClose={() => setShowCalc(false)} onSaveAsExpense={handleSaveFromCalc} isIncognito={isIncognito} />}
-      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} avatarId={avatarId} setAvatarId={setAvatarId} showToast={showToast} expenses={expenses} isIncognito={isIncognito} />}
+      {showSignIn  && <SignInSheet     onClose={() => setShowSignIn(false)} avatarId={avatarId} onAvatarSelect={handleAvatarSelect} showToast={showToast} expenses={expenses} isIncognito={isIncognito} />}
     </div>
   )
 }

@@ -7,7 +7,7 @@ import RankBadge from './RankBadge'
 import StreakBadge from './StreakBadge'
 import TrendsView from './TrendsView'
 
-export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast, expenses = [], isIncognito = false }) {
+export default function SignInSheet({ onClose, avatarId, onAvatarSelect, showToast, expenses = [], isIncognito = false }) {
   const { user, signIn, verifyCode, signOut } = useAuth()
   const [email,   setEmail]   = useState('')
   const [code,    setCode]    = useState('')
@@ -17,9 +17,10 @@ export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast,
   const [showTrends, setShowTrends] = useState(false)
 
   function handleAvatarSelect(id) {
-    setAvatarId(id)
+    onAvatarSelect(id)
     showToast('✨ Avatar updated successfully!')
-    onClose()
+    // Slight delay before closing to let them see the selection, 
+    // or we could just keep it open. Let's keep it open for now.
   }
 
   async function handleSend() {
@@ -43,7 +44,7 @@ export default function SignInSheet({ onClose, avatarId, setAvatarId, showToast,
   const inputStyle = {
     width: '100%', padding: '13px 14px', borderRadius: 'var(--radius-md)',
     border: '1.5px solid var(--border-strong)', background: 'var(--bg-elevated)',
-    fontSize: 15, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
+    fontSize: 16, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
   }
 
   return (
