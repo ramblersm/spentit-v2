@@ -285,7 +285,7 @@ export default function App() {
       note: 'Quick add: Groceries',
       date: today(),
       createdAt: Date.now(),
-      type: 'personal'
+      type: 'shared'
     }
     addExpense(exp)
     setShowQuickAdd(false)
