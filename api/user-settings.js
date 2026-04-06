@@ -25,13 +25,19 @@ export default async function handler(req, res) {
     if (avatar_id !== undefined) updates.avatar_id = avatar_id
     if (timezone !== undefined) updates.timezone = timezone
 
+    console.log('[api/user-settings] patching user:', user.id, 'updates:', updates)
+
     const { data, error } = await supabase
       .from('users')
-      .upsert({ id: user.id, ...updates }, { onConflict: 'id' })
+      .update(updates)
+      .eq('id', user.id)
       .select()
       .single()
 
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      console.error('[api/user-settings] patch error:', error.message)
+      return res.status(500).json({ error: error.message })
+    }
     return res.status(200).json(data)
   }
 
