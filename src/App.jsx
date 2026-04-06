@@ -116,7 +116,7 @@ export default function App() {
   useEffect(() => { 
     if (user) { 
       // Initial upsert on login to ensure user exists
-      upsertUser(user); 
+      upsertUser(user, avatarId); 
       track('login_completed', {}, user.id) 
     } 
   }, [user])
@@ -159,7 +159,6 @@ export default function App() {
           note: e.note, type: e.type, date: e.date,
           createdAt: new Date(e.created_at).getTime(),
         }))
-        // Only overwrite if we actually have data, or if local is empty
         if (shaped.length > 0 || loadExp().length === 0) {
           setExpenses(shaped)
         }
@@ -177,13 +176,11 @@ export default function App() {
     }
     
     setSyncing(true)
-    // Small delay to ensure any immediate local actions aren't stomped
     setTimeout(() => {
       Promise.all(local.map(e => api.createExpense(e).catch(() => null)))
         .then(() => { 
           localStorage.setItem(MIGRATED_KEY, 'true')
           setSyncing(false) 
-          // Re-fetch to get server-side IDs and standard timestamps
           return api.fetchExpenses()
         })
         .then(data => {
@@ -278,6 +275,46 @@ export default function App() {
     } else {
       setTimeout(() => { setExpenses(loadExp()); setListKey(k => k + 1); setRefreshing(false) }, 800)
     }
+  }
+
+  function handleQuickAdd(amount) {
+    const exp = {
+      id: api.genId ? api.genId() : Date.now().toString(36),
+      amount,
+      category: 'shopping',
+      note: 'Quick add: Groceries',
+      date: today(),
+      createdAt: Date.now(),
+      type: 'personal'
+    }
+    addExpense(exp)
+    setShowQuickAdd(false)
+    showToast(`✨ Added ₹${amount} for Groceries`)
+  }
+
+  function onFabPointerDown() {
+    isLongPress.current = false
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true
+      if (navigator.vibrate) navigator.vibrate(20)
+      setShowQuickAdd(true)
+    }, 350)
+  }
+
+  function onFabPointerUp(e) {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+    if (!isLongPress.current && !showQuickAdd) {
+      setShowSheet(true)
+    }
+    e.currentTarget.style.transform = 'scale(1)'
+  }
+
+  function onFabPointerMove() {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+  }
+
+  function onFabPointerLeave() {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }
 
   const { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(handleRefresh, scrollRef)
@@ -416,30 +453,6 @@ export default function App() {
 
 function usePullToRefresh(onRefresh, scrollRef) {
   const [distance, setDistance] = useState(0)
-  const startY = useRef(null); const active = useRef(false)
-  const THRESHOLD = 68
-
-  const onTouchStart = useCallback(e => {
-    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
-      startY.current = e.touches[0].clientY; active.current = false
-    }
-  }, [scrollRef])
-
-  const onTouchMove = useCallback(e => {
-    if (startY.current === null) return
-    const dy = e.touches[0].clientY - startY.current
-    if (dy > 4) { active.current = true; setDistance(Math.min(dy * 0.45, 90)) }
-    else { active.current = false; setDistance(0) }
-  }, [])
-
-  const onTouchEnd = useCallback(() => {
-    if (active.current && distance >= THRESHOLD) onRefresh()
-    setDistance(0); startY.current = null; active.current = false
-  }, [distance, onRefresh, THRESHOLD])
-
-  return { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd }
-}
-nce] = useState(0)
   const startY = useRef(null); const active = useRef(false)
   const THRESHOLD = 68
 
