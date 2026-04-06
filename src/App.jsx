@@ -55,6 +55,7 @@ export default function App() {
   const [showSignIn,     setShowSignIn]     = useState(false)
   const [showExport,     setShowExport]     = useState(false)
   const [showCalc,       setShowCalc]       = useState(false)
+  const [showQuickAdd,   setShowQuickAdd]   = useState(false)
   const [showSplash,     setShowSplash]     = useState(() => !sessionStorage.getItem(SPLASH_SHOWN))
   const [showChime,      setShowChime]      = useState(false)
   const [refreshing,     setRefreshing]     = useState(false)
@@ -66,6 +67,8 @@ export default function App() {
   const undoTimerRef = useRef(null)
   const scrollRef    = useRef(null)
   const lastFetchId  = useRef(0)
+  const longPressTimer = useRef(null)
+  const isLongPress    = useRef(false)
 
   // PWA Update Logic
   const {
@@ -370,9 +373,36 @@ export default function App() {
         </div>
       )}
 
+      {/* Quick Add Menu */}
+      {showQuickAdd && (
+        <>
+          <div onClick={() => setShowQuickAdd(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(2px)', zIndex: 35 }} />
+          <div style={{ position: 'fixed', bottom: 'calc(100px + var(--safe-bottom))', right: 24, display: 'flex', flexDirection: 'column', gap: 12, zIndex: 40 }}>
+            {[500, 200, 100, 50].map((amt, i) => (
+              <button key={amt} onClick={() => handleQuickAdd(amt)} style={{
+                width: 58, height: 58, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1.5px solid var(--border-strong)',
+                color: 'var(--accent)', fontSize: 16, fontWeight: 700, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                animation: `quickAddPop 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards`,
+                animationDelay: `${i * 0.04}s`,
+                opacity: 0,
+              }}>
+                ₹{amt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* FAB */}
-      <button onClick={() => setShowSheet(true)} onTouchStart={e => e.currentTarget.style.transform = 'scale(0.88)'} onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-        style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>+</button>
+      <button 
+        onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.88)'; onFabTouchStart() }} 
+        onTouchMove={onFabTouchMove}
+        onTouchEnd={onFabTouchEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        style={{ position: 'fixed', bottom: 'calc(28px + var(--safe-bottom))', right: 24, width: 58, height: 58, borderRadius: '50%', background: 'var(--accent)', color: '#ffffff', fontSize: 28, fontWeight: 300, boxShadow: '0 4px 20px var(--accent-glow)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
+        {showQuickAdd ? '✕' : '+'}
+      </button>
 
       {showSheet   && <AddExpenseSheet onClose={handleCloseSheet} onAdd={addExpense} onUpdate={updateExpense} editExpense={editExpense} seedAmount={calcSeedAmount} expenses={expenses} defaultType={activeTypeFilter} />}
       {showBudgetSheet && <BudgetSummarySheet expenses={expenses} budget={overallBudget} onUpdateBudget={handleUpdateBudget} onClose={() => setShowBudgetSheet(false)} isIncognito={isIncognito} />}
@@ -385,6 +415,30 @@ export default function App() {
 
 function usePullToRefresh(onRefresh, scrollRef) {
   const [distance, setDistance] = useState(0)
+  const startY = useRef(null); const active = useRef(false)
+  const THRESHOLD = 68
+
+  const onTouchStart = useCallback(e => {
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY; active.current = false
+    }
+  }, [scrollRef])
+
+  const onTouchMove = useCallback(e => {
+    if (startY.current === null) return
+    const dy = e.touches[0].clientY - startY.current
+    if (dy > 4) { active.current = true; setDistance(Math.min(dy * 0.45, 90)) }
+    else { active.current = false; setDistance(0) }
+  }, [])
+
+  const onTouchEnd = useCallback(() => {
+    if (active.current && distance >= THRESHOLD) onRefresh()
+    setDistance(0); startY.current = null; active.current = false
+  }, [distance, onRefresh, THRESHOLD])
+
+  return { distance, THRESHOLD, onTouchStart, onTouchMove, onTouchEnd }
+}
+nce] = useState(0)
   const startY = useRef(null); const active = useRef(false)
   const THRESHOLD = 68
 
