@@ -103,12 +103,12 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       localStorage.removeItem(MIGRATED_KEY)
       localStorage.removeItem('spentit_avatar_id')
       setAvatarId(null)
     }
-  }, [user])
+  }, [user, authLoading])
 
   useEffect(() => { 
     if (user) { 
