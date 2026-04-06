@@ -47,7 +47,7 @@ export default function App() {
   const [activeFilter,   setActiveFilter]   = useState('today')
   const [activeTypeFilter, setActiveTypeFilter] = useState('all')
   const [customRange,    setCustomRange]    = useState({ from: today(), to: today() })
-  const [avatarId,       setAvatarId]       = useState(null)
+  const [avatarId,       setAvatarId]       = useState(() => localStorage.getItem('spentit_avatar_id'))
   const [overallBudget,  setOverallBudget]  = useState(0)
   const [isIncognito,    setIsIncognito]    = useState(false)
   const [showSheet,      setShowSheet]      = useState(false)
@@ -65,6 +65,7 @@ export default function App() {
   const [syncing,        setSyncing]        = useState(false)
   const undoTimerRef = useRef(null)
   const scrollRef    = useRef(null)
+  const lastFetchId  = useRef(0)
 
   // PWA Update Logic
   const {
@@ -104,6 +105,8 @@ export default function App() {
   useEffect(() => {
     if (!user) {
       localStorage.removeItem(MIGRATED_KEY)
+      localStorage.removeItem('spentit_avatar_id')
+      setAvatarId(null)
     }
   }, [user])
 
@@ -130,6 +133,7 @@ export default function App() {
 
   function handleAvatarSelect(id) {
     setAvatarId(id)
+    localStorage.setItem('spentit_avatar_id', id)
     if (user) {
       api.updateUserSettings({ avatar_id: id }).catch(() => {})
     }
@@ -143,15 +147,19 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return
+    const fetchId = ++lastFetchId.current
     api.fetchExpenses()
       .then(data => {
+        if (fetchId !== lastFetchId.current) return
         const shaped = data.map(e => ({
           id: e.id, amount: Number(e.amount), category: e.category,
           note: e.note, type: e.type, date: e.date,
           createdAt: new Date(e.created_at).getTime(),
         }))
-        if (shaped.length === 0 && loadExp().length > 0) return
-        setExpenses(shaped)
+        // Only overwrite if we actually have data, or if local is empty
+        if (shaped.length > 0 || loadExp().length === 0) {
+          setExpenses(shaped)
+        }
       })
       .catch(() => {})
   }, [user])
@@ -160,11 +168,33 @@ export default function App() {
     if (!user) return
     if (localStorage.getItem(MIGRATED_KEY) === 'true') return
     const local = loadExp()
-    if (!local.length) { localStorage.setItem(MIGRATED_KEY, 'true'); return }
+    if (!local.length) { 
+      localStorage.setItem(MIGRATED_KEY, 'true')
+      return 
+    }
+    
     setSyncing(true)
-    Promise.all(local.map(e => api.createExpense(e).catch(() => null)))
-      .then(() => { localStorage.setItem(MIGRATED_KEY, 'true'); setSyncing(false) })
-      .catch(() => setSyncing(false))
+    // Small delay to ensure any immediate local actions aren't stomped
+    setTimeout(() => {
+      Promise.all(local.map(e => api.createExpense(e).catch(() => null)))
+        .then(() => { 
+          localStorage.setItem(MIGRATED_KEY, 'true')
+          setSyncing(false) 
+          // Re-fetch to get server-side IDs and standard timestamps
+          return api.fetchExpenses()
+        })
+        .then(data => {
+          if (data) {
+            const shaped = data.map(e => ({
+              id: e.id, amount: Number(e.amount), category: e.category,
+              note: e.note, type: e.type, date: e.date,
+              createdAt: new Date(e.created_at).getTime(),
+            }))
+            setExpenses(shaped)
+          }
+        })
+        .catch(() => setSyncing(false))
+    }, 1000)
   }, [user])
 
   useEffect(() => { saveExp(expenses) }, [expenses])
