@@ -31,13 +31,14 @@ import ChimeRipple from './components/ChimeRipple'
 
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
-async function upsertUser(user, avatarId = null) {
+async function upsertUser(user, avatarId = null, budget = null) {
   if (!supabase) return
   await supabase.from('users').upsert({
     id: user.id,
     email: user.email,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     ...(avatarId ? { avatar_id: avatarId } : {}),
+    ...(budget !== null ? { monthly_budget: budget } : {}),
   }, { onConflict: 'id' })
 }
 
