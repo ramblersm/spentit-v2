@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { CATEGORIES } from '../constants'
-import { today, formatDisplayDate, genId, getCat, formatCurrency } from '../utils'
+import { today, formatDisplayDate, genId, getCat, formatCurrency, useDragToClose } from '../utils'
 import { sheetBackdrop, sheetBase, dateInputStyle } from './sharedStyles'
 import SheetHandle from './SheetHandle'
 
@@ -80,6 +80,7 @@ export default function AddExpenseSheet({ onClose, onAdd, onUpdate, editExpense 
   }
 
   const drag = useDragToClose(useState, useRef, onClose)
+  const keys = ['1','2','3','4','5','6','7','8','9','.','0','del']
 
   return (
     <>

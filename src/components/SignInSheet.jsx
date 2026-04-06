@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '../useAuth'
 import { AVATARS } from '../constants'
 import { sheetBackdrop, sheetBase } from './sharedStyles'
+import { useDragToClose } from '../utils'
 import SheetHandle from './SheetHandle'
 import RankBadge from './RankBadge'
 import StreakBadge from './StreakBadge'
@@ -15,6 +16,7 @@ export default function SignInSheet({ onClose, avatarId, onAvatarSelect, showToa
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [showTrends, setShowTrends] = useState(false)
+  const drag = useDragToClose(useState, useRef, onClose)
 
   function handleAvatarSelect(id) {
     onAvatarSelect(id)
