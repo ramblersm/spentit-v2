@@ -31,14 +31,13 @@ import ChimeRipple from './components/ChimeRipple'
 
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
-async function upsertUser(user, avatarId = null, budget = null) {
+async function upsertUser(user, avatarId = null) {
   if (!supabase) return
   await supabase.from('users').upsert({
     id: user.id,
     email: user.email,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     ...(avatarId ? { avatar_id: avatarId } : {}),
-    ...(budget !== null ? { monthly_budget: budget } : {}),
   }, { onConflict: 'id' })
 }
 
@@ -127,7 +126,7 @@ export default function App() {
           setAvatarId(data.avatar_id)
           localStorage.setItem('spentit_avatar_id', data.avatar_id)
         }
-        if (data.monthly_budget) setOverallBudget(data.monthly_budget)
+        if (data.monthly_budget !== undefined) setOverallBudget(data.monthly_budget)
       })
       .catch(() => {})
   }, [user])
